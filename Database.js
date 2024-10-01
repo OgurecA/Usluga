@@ -51,14 +51,14 @@ module.exports = {
 
   getSearchRequestsByUser: (id) => {
     const select = db.prepare(`
-      SELECT * FROM search WHERE user_id = ?
+      SELECT * FROM search WHERE id = ?
     `);
     return select.all(id);
   },
 
   getOfferRequestsByUser: (id) => {
     const select = db.prepare(`
-      SELECT * FROM offer WHERE user_id = ?
+      SELECT * FROM offer WHERE id = ?
     `);
     return select.all(id);
   },
