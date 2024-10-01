@@ -575,28 +575,31 @@ bot.on('message', (msg) => {
     const searchRequests = db.getSearchRequestsByUser(userId);
     const offerRequests = db.getOfferRequestsByUser(userId);
   
-    let message = 'Ваши заявки:\n\n';
-  
+    // Если есть заявки на поиск услуг
     if (searchRequests.length > 0) {
-      message += '🔍 **Поиск услуг**:\n';
+      let searchMessage = '🔍 **Ваши заявки на поиск услуг**:\n\n';
       searchRequests.forEach((req, index) => {
-        message += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
+        searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
       });
+      // Отправка сообщения только с заявками на поиск
+      bot.sendMessage(chatId, searchMessage);
     }
   
+    // Если есть заявки на предоставление услуг
     if (offerRequests.length > 0) {
-      message += '\n💼 **Предоставление услуг**:\n';
+      let offerMessage = '💼 **Ваши заявки на предоставление услуг**:\n\n';
       offerRequests.forEach((req, index) => {
-        message += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
+        offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
       });
+      // Отправка сообщения только с заявками на предоставление
+      bot.sendMessage(chatId, offerMessage);
     }
   
+    // Если нет ни заявок на поиск, ни заявок на предоставление услуг
     if (searchRequests.length === 0 && offerRequests.length === 0) {
-      message = 'У вас нет активных заявок.';
+      bot.sendMessage(chatId, 'У вас нет активных заявок.');
     }
   
-    bot.sendMessage(chatId, message);
-
   } else {
     if (states[chatId]) {
       const userState = states[chatId];
