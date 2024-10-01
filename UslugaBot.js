@@ -778,6 +778,25 @@ function handleSearchService(chatId, text, userState, userId) {
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
       
       bot.sendMessage(chatId, searchSummary);
+
+      // Получение всех предложений из таблицы `offer`
+      const offerRequests = db.getOffersByCountry(userState.responses.country);
+
+      if (offerRequests.length > 0) {
+        let offersMessage = '📋 *Предложения услуг*:\n\n';
+        
+        // Формируем список предложений
+        offerRequests.forEach((req, index) => {
+          offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
+        });
+        
+        // Отправляем сообщение с предложениями
+        bot.sendMessage(chatId, offersMessage);
+      } else {
+        // Сообщение в случае отсутствия предложений
+        bot.sendMessage(chatId, 'На данный момент нет доступных предложений.');
+      }
+
       delete states[chatId];
       break;
   }
@@ -925,6 +944,24 @@ function handleProvideService(chatId, text, userState, userId) {
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
       
       bot.sendMessage(chatId, searchSummary);
+      
+      const searchRequests = db.getSearchesByCountry(userState.responses.country);
+
+      if (searchRequests.length > 0) {
+        let searchesMessage = '📋 *Предложения услуг*:\n\n';
+        
+        // Формируем список предложений
+        searchRequests.forEach((req, index) => {
+          searchesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
+        });
+        
+        // Отправляем сообщение с предложениями
+        bot.sendMessage(chatId, searchesMessage);
+      } else {
+        // Сообщение в случае отсутствия предложений
+        bot.sendMessage(chatId, 'На данный момент нет доступных предложений.');
+      }
+
       delete states[chatId];
       break;
   }

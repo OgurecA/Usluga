@@ -67,6 +67,17 @@ module.exports = {
     return select.all(id);
   },
 
+  getOffersByCountry: (country) => {
+    const query = db.prepare("SELECT * FROM offer WHERE country = ?");
+    return query.all(country);
+  },
+
+  getSearchesByCountry: (country) => {
+    const query = db.prepare("SELECT * FROM search WHERE country = ?");
+    return query.all(country);
+  },
+
+
   // Закрытие соединения с базой данных
   close: () => db.close(),
 };
