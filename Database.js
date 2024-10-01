@@ -49,18 +49,18 @@ module.exports = {
     insert.run(id, country, city, date, time, amount, description);
   },
 
-  getSearchRequestsByUser: (userId) => {
+  getSearchRequestsByUser: (id) => {
     const select = db.prepare(`
       SELECT * FROM search WHERE user_id = ?
     `);
-    return select.all(userId);
+    return select.all(id);
   },
 
-  getOfferRequestsByUser: (userId) => {
+  getOfferRequestsByUser: (id) => {
     const select = db.prepare(`
       SELECT * FROM offer WHERE user_id = ?
     `);
-    return select.all(userId);
+    return select.all(id);
   },
 
   // Закрытие соединения с базой данных
