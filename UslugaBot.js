@@ -579,7 +579,7 @@ bot.on('message', (msg) => {
     if (searchRequests.length > 0) {
       let searchMessage = '🔍 **Ваши заявки на поиск услуг**:\n\n';
       searchRequests.forEach((req, index) => {
-        searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n\n`;
+        searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
       // Отправка сообщения только с заявками на поиск
       bot.sendMessage(chatId, searchMessage);
@@ -589,7 +589,7 @@ bot.on('message', (msg) => {
     if (offerRequests.length > 0) {
       let offerMessage = '💼 **Ваши заявки на предоставление услуг**:\n\n';
       offerRequests.forEach((req, index) => {
-        offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n\n`;
+        offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
       // Отправка сообщения только с заявками на предоставление
       bot.sendMessage(chatId, offerMessage);
