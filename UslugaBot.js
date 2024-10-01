@@ -739,18 +739,19 @@ function handleSearchService(chatId, text, userState, userId) {
       bot.sendMessage(chatId, 'Timer:');
       break;
 
-    case 'search_6':
-      const Timer = parseInt(text, 10);
-      if (isNaN(Timer) || Timer < 1 || Timer > 24) {
-        bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+      case 'search_6':
+        const Timer = Number(text); // Преобразуем текст в число
+        if (isNaN(Timer) || Timer < 1 || Timer > 24 || !Number.isInteger(Timer)) {
+          bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+          break;
+        }
+      
+        // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
+        userState.responses.timer = text;
+        userState.step = 'search_7';
+        bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
         break;
-      }
-    
-      // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
-      userState.responses.timer = text;
-      userState.step = 'search_7';
-      bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
-    break;
+      
 
 
     case 'search_7':
@@ -886,19 +887,19 @@ function handleProvideService(chatId, text, userState, userId) {
       bot.sendMessage(chatId, 'Timer:');
       break;
 
-    case 'provide_6':
-  // Преобразуем текст в целое число и проверяем, чтобы оно было в диапазоне 1-24
-  const Timer = parseInt(text, 10);
-  if (isNaN(Timer) || Timer < 1 || Timer > 24) {
-    bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
-    break;
-  }
-
-  // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
-  userState.responses.timer = text;
-  userState.step = 'provide_7';
-  bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
-  break;
+      case 'provide_6':
+        const Timer = Number(text); // Преобразуем текст в число
+        if (isNaN(Timer) || Timer < 1 || Timer > 24 || !Number.isInteger(Timer)) {
+          bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+          break;
+        }
+      
+        // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
+        userState.responses.timer = text;
+        userState.step = 'provide_7';
+        bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+        break;
+      
 
     case 'provide_7':
       userState.responses.description = text;

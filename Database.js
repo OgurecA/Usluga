@@ -39,7 +39,7 @@ module.exports = {
   addSearchRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
     const insert = db.prepare(`
       INSERT INTO search (id, country, city, date, time, amount, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insert.run(id, country, city, date, time, amount, description, contact, deletion);
   },
@@ -48,7 +48,7 @@ module.exports = {
   addOfferRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
     const insert = db.prepare(`
       INSERT INTO offer (id, country, city, date, time, amount, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insert.run(id, country, city, date, time, amount, description, contact, deletion);
   },
