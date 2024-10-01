@@ -606,7 +606,7 @@ bot.on('message', (msg) => {
       if (userState.step.startsWith('search')) {
         handleSearchService(chatId, text, userState, userId);
       } else if (userState.step.startsWith('provide')) {
-        handleProvideService(chatId, text, userState);
+        handleProvideService(chatId, text, userState, userId);
       }
     }
   }
