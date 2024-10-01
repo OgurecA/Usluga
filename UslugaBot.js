@@ -560,8 +560,7 @@ bot.onText(/\/start/, (msg) => {
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
-  const userId = msg.from.id; 
-  console.log(userId);
+  const userId = msg.from.id;
 
   if (text === 'Ищу услугу') {
     // Логика запускается при выборе "Ищу услугу"
@@ -572,7 +571,32 @@ bot.on('message', (msg) => {
     states[chatId] = { step: 'provide_1', responses: {} };
     bot.sendMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
   } else if (text === 'Мои заявки') {
-    bot.sendMessage(chatId, 'Вы выбрали: Мои заявки.');
+    // Логика получения заявок пользователя
+    const searchRequests = db.getSearchRequestsByUser(userId);
+    const offerRequests = db.getOfferRequestsByUser(userId);
+  
+    let message = 'Ваши заявки:\n\n';
+  
+    if (searchRequests.length > 0) {
+      message += '🔍 **Поиск услуг**:\n';
+      searchRequests.forEach((req, index) => {
+        message += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
+      });
+    }
+  
+    if (offerRequests.length > 0) {
+      message += '\n💼 **Предоставление услуг**:\n';
+      offerRequests.forEach((req, index) => {
+        message += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n`;
+      });
+    }
+  
+    if (searchRequests.length === 0 && offerRequests.length === 0) {
+      message = 'У вас нет активных заявок.';
+    }
+  
+    bot.sendMessage(chatId, message);
+
   } else {
     if (states[chatId]) {
       const userState = states[chatId];
@@ -730,7 +754,7 @@ function handleSearchService(chatId, text, userState, userId) {
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПРЕДОСТАВЛЕНИЯ УСЛУГИ
 // ---------------------------------------------
 
-function handleProvideService(chatId, text, userState) {
+function handleProvideService(chatId, text, userState, userId) {
   switch (userState.step) {
     case 'provide_1':
       const bestMatchCountry = findClosestCountry(text);
@@ -833,6 +857,10 @@ function handleProvideService(chatId, text, userState) {
     case 'provide_6':
       userState.responses.description = text;
       const searchSummary = `Заявка завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}`;
+      
+      const { country, city, date, time, amount, description } = userState.responses;
+      db.addOfferRequest(userId, country, city, date, time, amount, description);
+      
       bot.sendMessage(chatId, searchSummary);
       delete states[chatId];
       break;

@@ -49,6 +49,20 @@ module.exports = {
     insert.run(id, country, city, date, time, amount, description);
   },
 
+  getSearchRequestsByUser: (userId) => {
+    const select = db.prepare(`
+      SELECT * FROM search WHERE user_id = ?
+    `);
+    return select.all(userId);
+  },
+
+  getOfferRequestsByUser: (userId) => {
+    const select = db.prepare(`
+      SELECT * FROM offer WHERE user_id = ?
+    `);
+    return select.all(userId);
+  },
+
   // Закрытие соединения с базой данных
   close: () => db.close(),
 };
