@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS search (
   date TEXT NOT NULL,
   time TEXT NOT NULL,
   amount TEXT NOT NULL,
-  description TEXT NOT NULL
+  description TEXT NOT NULL,
+  contact TEXT NOT NULL,
+  deletion TEXT NOT NULL
 )`).run();
 
 // Создание таблицы "offer" для хранения предложений услуг
@@ -26,27 +28,29 @@ CREATE TABLE IF NOT EXISTS offer (
   date TEXT NOT NULL,
   time TEXT NOT NULL,
   amount TEXT NOT NULL,
-  description TEXT NOT NULL
+  description TEXT NOT NULL,
+  contact TEXT NOT NULL,
+  deletion TEXT NOT NULL
 )`).run();
 
 // Функции работы с базой данных
 module.exports = {
   // Пример функции для добавления заявки в таблицу search
-  addSearchRequest: (id, country, city, date, time, amount, description) => {
+  addSearchRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
     const insert = db.prepare(`
-      INSERT INTO search (id, country, city, date, time, amount, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO search (id, country, city, date, time, amount, description, contact, deletion)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, description);
+    insert.run(id, country, city, date, time, amount, description, contact, deletion);
   },
 
   // Пример функции для добавления заявки в таблицу offer
-  addOfferRequest: (id, country, city, date, time, amount, description) => {
+  addOfferRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
     const insert = db.prepare(`
-      INSERT INTO offer (id, country, city, date, time, amount, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO offer (id, country, city, date, time, amount, description, contact, deletion)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, description);
+    insert.run(id, country, city, date, time, amount, description, contact, deletion);
   },
 
   getSearchRequestsByUser: (id) => {

@@ -732,21 +732,50 @@ function handleSearchService(chatId, text, userState, userId) {
       bot.sendMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
     }
     break;
-  
-
+    
     case 'search_5':
       userState.responses.amount = text;
       userState.step = 'search_6';
-      bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+      bot.sendMessage(chatId, 'Timer:');
       break;
 
     case 'search_6':
-      userState.responses.description = text;
-      const searchSummary = `Поиск услуги завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}`;
-      
-      const { country, city, date, time, amount, description } = userState.responses;
-      db.addSearchRequest(userId, country, city, date, time, amount, description);
+      const Timer = parseInt(text, 10);
+      if (isNaN(Timer) || Timer < 1 || Timer > 24) {
+        bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+        break;
+      }
+    
+      // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
+      userState.responses.timer = text;
+      userState.step = 'search_7';
+      bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+    break;
 
+
+    case 'search_7':
+      userState.responses.description = text;
+      userState.step = 'search_8';
+      bot.sendMessage(chatId, 'Contact:');
+      break;
+
+    case 'search_8':
+      userState.responses.contact = text;
+
+      const currentDateTime = new Date();
+      // Преобразуем таймер из строки в целое число (в часах)
+      const timerHours = parseInt(userState.responses.timer, 10);
+      // Добавляем количество часов к текущему времени
+      const deletionDate = new Date(currentDateTime.getTime() + timerHours * 60 * 60 * 1000);
+      // Преобразуем дату в строку в формате: YYYY-MM-DD HH:MM
+      const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
+
+      
+      const searchSummary = `Поиск завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      
+      const { country, city, date, time, amount, description, contact } = userState.responses;
+      db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
+      
       bot.sendMessage(chatId, searchSummary);
       delete states[chatId];
       break;
@@ -854,15 +883,45 @@ function handleProvideService(chatId, text, userState, userId) {
     case 'provide_5':
       userState.responses.amount = text;
       userState.step = 'provide_6';
-      bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+      bot.sendMessage(chatId, 'Timer:');
       break;
 
     case 'provide_6':
+  // Преобразуем текст в целое число и проверяем, чтобы оно было в диапазоне 1-24
+  const Timer = parseInt(text, 10);
+  if (isNaN(Timer) || Timer < 1 || Timer > 24) {
+    bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+    break;
+  }
+
+  // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
+  userState.responses.timer = text;
+  userState.step = 'provide_7';
+  bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+  break;
+
+    case 'provide_7':
       userState.responses.description = text;
-      const searchSummary = `Заявка завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}`;
+      userState.step = 'provide_8';
+      bot.sendMessage(chatId, 'Contact:');
+      break;
+
+    case 'provide_8':
+      userState.responses.contact = text;
+
+      const currentDateTime = new Date();
+      // Преобразуем таймер из строки в целое число (в часах)
+      const timerHours = parseInt(userState.responses.timer, 10);
+      // Добавляем количество часов к текущему времени
+      const deletionDate = new Date(currentDateTime.getTime() + timerHours * 60 * 60 * 1000);
+      // Преобразуем дату в строку в формате: YYYY-MM-DD HH:MM
+      const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
+
       
-      const { country, city, date, time, amount, description } = userState.responses;
-      db.addOfferRequest(userId, country, city, date, time, amount, description);
+      const searchSummary = `Заявка завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      
+      const { country, city, date, time, amount, description, contact } = userState.responses;
+      db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
       
       bot.sendMessage(chatId, searchSummary);
       delete states[chatId];
