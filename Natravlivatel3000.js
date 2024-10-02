@@ -26,3 +26,5 @@ schedule.scheduleJob('*/15 * * * *', () => {
 });
 
 console.log('Планировщик запущен и готов к работе.');
+
+removeExpiredRequests();
