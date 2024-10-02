@@ -562,10 +562,19 @@ bot.on('message', (msg) => {
   const text = msg.text;
   const userId = msg.from.id;
 
-  if (text === 'Ищу услугу') {
-    // Логика запускается при выборе "Ищу услугу"
-    states[chatId] = { step: 'search_1', responses: {} };
-    bot.sendMessage(chatId, 'В какой стране вы хотите найти услугу?');
+  if (text === 'Ищу услугу') {  
+    // Достаем все заявки пользователя на поиск услуг из базы данных
+    const userSearchRequests = db.getSearchRequestsByUser(userId);
+  
+    // Проверяем количество активных заявок
+    if (userSearchRequests.length >= 3) {
+      // Если заявок 3 или больше, отправляем сообщение об ограничении
+      bot.sendMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
+    } else {
+      // Если заявок меньше 3, начинаем процесс создания новой заявки
+      states[chatId] = { step: 'search_1', responses: {} };
+      bot.sendMessage(chatId, 'В какой стране вы хотите найти услугу?');
+    }
   } else if (text === 'Предоставляю услугу') {
     // Логика запускается при выборе "Предоставляю услугу"
     states[chatId] = { step: 'provide_1', responses: {} };
@@ -836,8 +845,29 @@ function handleSearchService(chatId, text, userState, userId) {
             
               } else {
                 // Сообщение в случае отсутствия предложений
-                bot.sendMessage(chatId, 'На данный момент нет подходящих предложений для указанных параметров.');
+                const cityMatches = sortedOffers.filter((offer) => offer.citySimilarity >= 0.7);
+
+                if (cityMatches.length === 0) {
+                  bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+                } else {
+                  // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
+                  const alternativeOffers = cityMatches.filter((offer) => offer.descriptionSimilarity >= 0.3);
+
+                  if (alternativeOffers.length > 0) {
+                    let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n\n';
+                    alternativeOffers.slice(0, 5).forEach((req, index) => {
+                      alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
+                    });
+
+                    setTimeout(() => {
+                      bot.sendMessage(chatId, alternativesMessage);
+                    }, 1000); // Задержка в 1 секунду
+                  } else {
+                    bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+                  }
+                }
               }
+            
             
             } else {
               // Сообщение в случае отсутствия предложений по стране
@@ -997,20 +1027,89 @@ function handleProvideService(chatId, text, userState, userId) {
       const searchRequests = db.getSearchesByCountry(userState.responses.country);
 
       if (searchRequests.length > 0) {
-        let searchesMessage = '📋 *Предложения услуг*:\n\n';
-        
-        // Формируем список предложений
-        searchRequests.forEach((req, index) => {
-          searchesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
-        });
-        
-        // Отправляем сообщение с предложениями
-        bot.sendMessage(chatId, searchesMessage);
-      } else {
-        // Сообщение в случае отсутствия предложений
-        bot.sendMessage(chatId, 'На данный момент нет доступных предложений.');
-      }
+        // Проверка для режимов сортировки и фильтрации
+        const ignoreCity = userState.responses.city === "-";
+        const ignoreDescription = userState.responses.description === "-";
+      
+        let sortedSearches;
+      
+        // Если оба поля — "-", выбираем 10 случайных предложений
+        if (ignoreCity && ignoreDescription) {
+          sortedSearches = searchRequests.sort(() => 0.5 - Math.random()).slice(0, 10);
+        } else {
+          // Сравниваем введенные данные с предложениями и вычисляем индексы схожести
+          sortedSearches = searchRequests
+            .map((search) => {
+              const citySimilarity = ignoreCity
+                ? 1 // Если игнорируем город, ставим максимальное значение для citySimilarity
+                : natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), search.city.toLowerCase());
+      
+              const descriptionSimilarity = ignoreDescription
+                ? 1 // Если игнорируем описание, ставим максимальное значение для descriptionSimilarity
+                : natural.JaroWinklerDistance(userState.responses.description.toLowerCase(), search.description.toLowerCase());
+              
+              return { ...search, citySimilarity, descriptionSimilarity };
+            })
+            .sort((a, b) => {
+              // Сортируем сначала по индексу схожести города, если сравниваем города
+              if (!ignoreCity && b.citySimilarity !== a.citySimilarity) {
+                return b.citySimilarity - a.citySimilarity;
+              }
+              // Сортируем по индексу схожести описания
+              return b.descriptionSimilarity - a.descriptionSimilarity;
+            });
+      
+          // Фильтруем предложения по схожести, если игнорирование не установлено
+          const relevantSearches = sortedSearches.filter((search) => {
+            return (ignoreCity || search.citySimilarity >= 0.7) && (ignoreDescription || search.descriptionSimilarity >= 0.5);
+          });
+      
+          // Оставляем только 5 самых подходящих предложений
+          sortedSearches = relevantSearches.slice(0, 5);
+        }
+      
+        // Отправляем релевантные предложения, если они есть
+        if (sortedSearches.length > 0) {
+          let searchesMessage = '📋 *Релевантные предложения услуг*:\n\n';
+          sortedSearches.forEach((req, index) => {
+            searchesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
+          });
+      
+          // Отправляем сообщение с задержкой в 1 секунду
+          setTimeout(() => {
+            bot.sendMessage(chatId, searchesMessage);
+          }, 1000); // Задержка в 1000 миллисекунд (1 секунда)
+      
+        } else {
+          // Сообщение в случае отсутствия предложений
+          const cityMatches = sortedSearches.filter((search) => search.citySimilarity >= 0.7);
 
+          if (cityMatches.length === 0) {
+            bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+          } else {
+            // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
+            const alternativeSearches = cityMatches.filter((search) => search.descriptionSimilarity >= 0.3);
+
+            if (alternativeSearches.length > 0) {
+              let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n\n';
+              alternativeSearches.slice(0, 5).forEach((req, index) => {
+                alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
+              });
+
+              setTimeout(() => {
+                bot.sendMessage(chatId, alternativesMessage);
+              }, 1000); // Задержка в 1 секунду
+            } else {
+              bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+            }
+          }
+        }
+      
+      } else {
+        // Сообщение в случае отсутствия предложений по стране
+        bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
+      }
+      
       delete states[chatId];
       break;
   }
