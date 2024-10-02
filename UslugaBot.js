@@ -576,9 +576,17 @@ bot.on('message', (msg) => {
       bot.sendMessage(chatId, 'В какой стране вы хотите найти услугу?');
     }
   } else if (text === 'Предоставляю услугу') {
+    const userOfferRequests = db.getOfferRequestsByUser(userId);
     // Логика запускается при выборе "Предоставляю услугу"
-    states[chatId] = { step: 'provide_1', responses: {} };
-    bot.sendMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
+
+    // Проверяем количество активных заявок
+    if (userOfferRequests.length >= 3) {
+      // Если заявок 3 или больше, отправляем сообщение об ограничении
+      bot.sendMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
+    } else {
+      states[chatId] = { step: 'provide_1', responses: {} };
+      bot.sendMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
+    }
   } else if (text === 'Мои заявки') {
     // Логика получения заявок пользователя
     const searchRequests = db.getSearchRequestsByUser(userId);
