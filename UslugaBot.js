@@ -781,18 +781,24 @@ function handleSearchService(chatId, text, userState, userId) {
       const offerRequests = db.getOffersByCountry(userState.responses.country);
 
       if (offerRequests.length > 0) {
-        // Сравниваем введенный город с городами предложений и вычисляем индекс схожести
+        // Сравниваем введенный город с городами предложений и вычисляем индекс схожести по городам
         let sortedOffers = offerRequests
           .map((offer) => {
-            const similarityIndex = natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
-            return { ...offer, similarityIndex };
+            const citySimilarity = natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
+            const descriptionSimilarity = natural.JaroWinklerDistance(userState.responses.description.toLowerCase(), offer.description.toLowerCase());
+            return { ...offer, citySimilarity, descriptionSimilarity };
           })
-          .sort((a, b) => b.similarityIndex - a.similarityIndex);
-      
-        // Фильтруем предложения на релевантные и менее релевантные
-        const relevantOffers = sortedOffers.filter(offer => offer.similarityIndex >= 0.7); // Устанавливаем порог релевантности на уровне 0.7
-        const lessRelevantOffers = sortedOffers.filter(offer => offer.similarityIndex < 0.7);
-      
+          .sort((a, b) => {
+            // Сортируем сначала по индексу схожести города, а затем по схожести описания
+            if (b.citySimilarity === a.citySimilarity) {
+              return b.descriptionSimilarity - a.descriptionSimilarity;
+            }
+            return b.citySimilarity - a.citySimilarity;
+          });
+
+        // Фильтруем предложения, которые соответствуют требованиям по городу и описанию
+        const relevantOffers = sortedOffers.filter(offer => offer.citySimilarity >= 0.7 && offer.descriptionSimilarity >= 0.5);
+
         // Отправляем релевантные предложения, если они есть
         if (relevantOffers.length > 0) {
           let offersMessage = '📋 *Релевантные предложения услуг*:\n\n';
@@ -800,22 +806,16 @@ function handleSearchService(chatId, text, userState, userId) {
             offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
           });
           bot.sendMessage(chatId, offersMessage);
+        } else {
+          // Сообщение в случае отсутствия предложений
+          bot.sendMessage(chatId, 'На данный момент нет подходящих предложений для указанного города и описания.');
         }
-      
-        // Отправляем менее релевантные предложения отдельным сообщением
-        if (lessRelevantOffers.length > 0) {
-          let lessOffersMessage = '📋 *Другие предложения услуг* (с меньшей схожестью):\n\n';
-          lessRelevantOffers.forEach((req, index) => {
-            lessOffersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
-          });
-          bot.sendMessage(chatId, lessOffersMessage);
-        }
-      
+
       } else {
-        // Сообщение в случае отсутствия предложений
-        bot.sendMessage(chatId, 'На данный момент нет доступных предложений.');
+        // Сообщение в случае отсутствия предложений по стране
+        bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
       }
-      
+
       delete states[chatId];
       break;
   }
