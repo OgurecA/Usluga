@@ -777,35 +777,53 @@ function handleSearchService(chatId, text, userState, userId) {
       
       bot.sendMessage(chatId, searchSummary);
 
-      // Получение всех предложений из таблицы `offer`
+            // Получение всех предложений из таблицы `offer`
       const offerRequests = db.getOffersByCountry(userState.responses.country);
 
       if (offerRequests.length > 0) {
-        // Сравниваем введенный город с городами предложений и вычисляем индекс схожести по городам
+        // Если пользователь указал "-", то игнорируем сравнение по городу и используем только описание
+        const sortByDescriptionOnly = userState.responses.city === "-";
+
+        // Сравниваем введенные данные с предложениями и вычисляем индексы схожести
         let sortedOffers = offerRequests
           .map((offer) => {
-            const citySimilarity = natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
+            const citySimilarity = sortByDescriptionOnly
+              ? 1 // Если игнорируем город, ставим максимальное значение для citySimilarity
+              : natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
+            
             const descriptionSimilarity = natural.JaroWinklerDistance(userState.responses.description.toLowerCase(), offer.description.toLowerCase());
+            
             return { ...offer, citySimilarity, descriptionSimilarity };
           })
           .sort((a, b) => {
-            // Сортируем сначала по индексу схожести города, а затем по схожести описания
-            if (b.citySimilarity === a.citySimilarity) {
-              return b.descriptionSimilarity - a.descriptionSimilarity;
+            // Сортируем сначала по индексу схожести города, если сравниваем города
+            if (!sortByDescriptionOnly && b.citySimilarity !== a.citySimilarity) {
+              return b.citySimilarity - a.citySimilarity;
             }
-            return b.citySimilarity - a.citySimilarity;
+            // Сортируем по индексу схожести описания
+            return b.descriptionSimilarity - a.descriptionSimilarity;
           });
 
-        // Фильтруем предложения, которые соответствуют требованиям по городу и описанию
-        const relevantOffers = sortedOffers.filter(offer => offer.citySimilarity >= 0.7 && offer.descriptionSimilarity >= 0.5);
+        // Фильтруем предложения по схожести описания, игнорируя город, если нужно
+        const relevantOffers = sortedOffers.filter((offer) => {
+          return (sortByDescriptionOnly || offer.citySimilarity >= 0.7) && offer.descriptionSimilarity >= 0.5;
+        });
+
+        // Оставляем только 5 самых подходящих предложений
+        const topRelevantOffers = relevantOffers.slice(0, 5);
 
         // Отправляем релевантные предложения, если они есть
-        if (relevantOffers.length > 0) {
-          let offersMessage = '📋 *Релевантные предложения услуг*:\n\n';
-          relevantOffers.forEach((req, index) => {
-            offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
+        if (topRelevantOffers.length > 0) {
+          let offersMessage = '📋 *Топ-5 релевантных предложений услуг*:\n\n';
+          topRelevantOffers.forEach((req, index) => {
+            offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
           });
-          bot.sendMessage(chatId, offersMessage);
+          
+          // Отправляем сообщение с задержкой в 1 секунду
+          setTimeout(() => {
+            bot.sendMessage(chatId, offersMessage);
+          }, 1000); // Задержка в 1000 миллисекунд (1 секунда)
+
         } else {
           // Сообщение в случае отсутствия предложений
           bot.sendMessage(chatId, 'На данный момент нет подходящих предложений для указанного города и описания.');
@@ -818,6 +836,7 @@ function handleSearchService(chatId, text, userState, userId) {
 
       delete states[chatId];
       break;
+
   }
 }
 
