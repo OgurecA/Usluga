@@ -1,11 +1,13 @@
-// Тестовый скрипт для проверки работы функций
 const db = require('./Database.js');
+const schedule = require('node-schedule');
 
+// Запускаем проверку устаревших записей каждые 15 минут
+schedule.scheduleJob('*/15 * * * *', () => {
+  console.log('Запуск проверки устаревших заявок...');
+  db.removeExpiredRequests();
+});
 
-// Пример получения всех заявок пользователя
-const requests = db.getSearchRequestsByUser(1);
-console.log('Заявки пользователя:', requests);
+console.log('Планировщик запущен и готов к работе.');
 
-// Пример получения всех предложений по стране
-const offers = db.getOffersByCountry('Russia');
-console.log('Предложения по России:', offers);
+// Первый запуск для удаления устаревших заявок
+db.removeExpiredRequests();
