@@ -782,35 +782,40 @@ function handleSearchService(chatId, text, userState, userId) {
 
       if (offerRequests.length > 0) {
         // Сравниваем введенный город с городами предложений и вычисляем индекс схожести
-        const citySimilarityThreshold = 0.7;  // Порог схожести
         let sortedOffers = offerRequests
           .map((offer) => {
-            // Рассчитываем коэффициент схожести для городов
             const similarityIndex = natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
-            return { ...offer, similarityIndex };  // Добавляем индекс схожести к каждому предложению
+            return { ...offer, similarityIndex };
           })
-          .filter((offer) => offer.similarityIndex >= citySimilarityThreshold)  // Фильтрация только схожих предложений
-          .sort((a, b) => b.similarityIndex - a.similarityIndex);  // Сортировка по убыванию индекса схожести
-    
-        // Проверяем наличие релевантных предложений
-        if (sortedOffers.length > 0) {
-          let offersMessage = '📋 *Предложения услуг*:\n\n';
-          
-          // Формируем сообщение с отсортированными предложениями
-          sortedOffers.forEach((req, index) => {
+          .sort((a, b) => b.similarityIndex - a.similarityIndex);
+      
+        // Фильтруем предложения на релевантные и менее релевантные
+        const relevantOffers = sortedOffers.filter(offer => offer.similarityIndex >= 0.7); // Устанавливаем порог релевантности на уровне 0.7
+        const lessRelevantOffers = sortedOffers.filter(offer => offer.similarityIndex < 0.7);
+      
+        // Отправляем релевантные предложения, если они есть
+        if (relevantOffers.length > 0) {
+          let offersMessage = '📋 *Релевантные предложения услуг*:\n\n';
+          relevantOffers.forEach((req, index) => {
             offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
           });
-          
-          // Отправляем сообщение с предложениями
           bot.sendMessage(chatId, offersMessage);
-        } else {
-          bot.sendMessage(chatId, 'На данный момент нет доступных предложений с соответствующими городами.');
         }
+      
+        // Отправляем менее релевантные предложения отдельным сообщением
+        if (lessRelevantOffers.length > 0) {
+          let lessOffersMessage = '📋 *Другие предложения услуг* (с меньшей схожестью):\n\n';
+          lessRelevantOffers.forEach((req, index) => {
+            lessOffersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n`;
+          });
+          bot.sendMessage(chatId, lessOffersMessage);
+        }
+      
       } else {
         // Сообщение в случае отсутствия предложений
         bot.sendMessage(chatId, 'На данный момент нет доступных предложений.');
       }
-    
+      
       delete states[chatId];
       break;
   }
