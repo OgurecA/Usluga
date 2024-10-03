@@ -617,11 +617,13 @@ bot.on('message', (msg) => {
 
     // Проверяем количество активных заявок
     if (userOfferRequests.length >= 3) {
+      deleteAllTrackedMessages(chatId);
       // Если заявок 3 или больше, отправляем сообщение об ограничении
-      bot.sendMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
+      sendAndTrackMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
     } else {
+      deleteAllTrackedMessages(chatId);
       states[chatId] = { step: 'provide_1', responses: {} };
-      bot.sendMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
+      sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
     }
   } else if (text === 'Мои заявки') {
     // Логика получения заявок пользователя
