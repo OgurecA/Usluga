@@ -561,14 +561,13 @@ function trackMessage(chatId, messageId) {
 }
 
 // Функция для отправки и отслеживания сообщений
-function sendAndTrackMessage(chatId, message, options = {}) {
-  return bot.sendMessage(chatId, message, options).then((sentMsg) => {
-    if (!messagesToDelete[chatId]) {
-      messagesToDelete[chatId] = [];
-    }
-    messagesToDelete[chatId].push(sentMsg.message_id);
-    return sentMsg;
-  });
+async function sendAndTrackMessage(chatId, message, options = {}) {
+  const sentMsg = await bot.sendMessage(chatId, message, options);
+  if (!messagesToDelete[chatId]) {
+    messagesToDelete[chatId] = [];
+  }
+  messagesToDelete[chatId].push(sentMsg.message_id);
+  return sentMsg;
 }
 
 // Функция для удаления всех отслеживаемых сообщений для определенного чата
@@ -669,8 +668,7 @@ bot.on('message', (msg) => {
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
 // ---------------------------------------------
 
-function handleSearchService(chatId, text, userState, userId, msg) {
-  trackMessage(chatId, msg.message_id);
+function handleSearchService(chatId, text, userState, userId) {
   switch (userState.step) {
     case 'search_1':
       const bestMatchCountry = findClosestCountry(text);
