@@ -887,14 +887,16 @@ function handleSearchService(chatId, text, userState, userId) {
                 // Отправляем сообщение с задержкой в 1 секунду
                 setTimeout(() => {
                   bot.sendMessage(chatId, offersMessage);
-                }, 1000); // Задержка в 1000 миллисекунд (1 секунда)
+                }, 500); // Задержка в 1000 миллисекунд (1 секунда)
             
               } else {
                 // Сообщение в случае отсутствия предложений
                 const cityMatches = sortedOffers.filter((offer) => offer.citySimilarity >= 0.7);
 
                 if (cityMatches.length === 0) {
-                  bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+                  setTimeout(() => {
+                    bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+                  }, 500);
                 } else {
                   // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
                   const alternativeOffers = cityMatches.filter((offer) => offer.descriptionSimilarity >= 0.3);
@@ -907,9 +909,11 @@ function handleSearchService(chatId, text, userState, userId) {
 
                     setTimeout(() => {
                       bot.sendMessage(chatId, alternativesMessage);
-                    }, 1000); // Задержка в 1 секунду
+                    }, 500); // Задержка в 1 секунду
                   } else {
-                    bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+                    setTimeout(() => {
+                      bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+                    }, 500);
                   }
                 }
               }
@@ -917,7 +921,9 @@ function handleSearchService(chatId, text, userState, userId) {
             
             } else {
               // Сообщение в случае отсутствия предложений по стране
-              bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
+              setTimeout(() => {
+                bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
+              }, 500);
             }
             deleteAllTrackedMessages(chatId);
             delete states[chatId];
