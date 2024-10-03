@@ -551,6 +551,31 @@ bot.onText(/\/start/, (msg) => {
   bot.sendMessage(chatId, message, options);
 });
 
+const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
+
+// Функция для отправки и отслеживания сообщений
+function sendAndTrackMessage(chatId, message, options = {}) {
+  return bot.sendMessage(chatId, message, options).then((sentMsg) => {
+    if (!messagesToDelete[chatId]) {
+      messagesToDelete[chatId] = [];
+    }
+    messagesToDelete[chatId].push(sentMsg.message_id);
+    return sentMsg;
+  });
+}
+
+// Функция для удаления всех отслеживаемых сообщений для определенного чата
+function deleteAllTrackedMessages(chatId) {
+  if (messagesToDelete[chatId]) {
+    messagesToDelete[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.log(`Ошибка при удалении сообщения: ${error}`);
+      });
+    });
+    // Очищаем список сообщений после удаления
+    messagesToDelete[chatId] = [];
+  }
+}
 
 
 // ---------------------------------------------
@@ -569,11 +594,12 @@ bot.on('message', (msg) => {
     // Проверяем количество активных заявок
     if (userSearchRequests.length >= 3) {
       // Если заявок 3 или больше, отправляем сообщение об ограничении
-      bot.sendMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
+      sendAndTrackMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите пока они удалятся автоматически или удалите их вручную.');
+      return;
     } else {
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
-      bot.sendMessage(chatId, 'В какой стране вы хотите найти услугу?');
+      sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу?');
     }
   } else if (text === 'Предоставляю услугу') {
     const userOfferRequests = db.getOfferRequestsByUser(userId);
@@ -643,9 +669,9 @@ function handleSearchService(chatId, text, userState, userId) {
         userState.responses.country = englishCountryName;
 
         userState.step = 'search_2';
-        bot.sendMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город:`);
+        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город:`);
       } else {
-        bot.sendMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
+        sendAndTrackMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
       }
       break;
     
@@ -653,14 +679,14 @@ function handleSearchService(chatId, text, userState, userId) {
 
       userState.responses.city = text;
       userState.step = 'search_3';
-      bot.sendMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023):');
+      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023):');
       break;
 
 
     case 'search_3':
   if (!dateRegex.test(text)) {
-    bot.sendMessage(chatId, 'Неверный формат даты. Укажите дату в формате DD/MM/YYYY (например, 01/10/2023).');
-  } else {
+    sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате DD/MM/YYYY (например, 01/10/2023).');
+    } else {
     const [_, day, month, year] = text.match(dateRegex);
     const inputDate = new Date(`${year}-${month}-${day}`);
 
@@ -671,7 +697,7 @@ function handleSearchService(chatId, text, userState, userId) {
     };
 
     if (!isValidDate(day, month, year)) {
-      bot.sendMessage(chatId, 'Введена нереальная дата. Убедитесь, что день, месяц и год указаны правильно.');
+      sendAndTrackMessage(chatId, 'Введена нереальная дата. Убедитесь, что день, месяц и год указаны правильно.');
     } else {
       const today = new Date();
       today.setHours(0, 0, 0, 0); // Сброс времени на 00:00 для корректного сравнения
@@ -683,13 +709,13 @@ function handleSearchService(chatId, text, userState, userId) {
 
       // Проверка на актуальность и дальность даты
       if (inputDate < today) {
-        bot.sendMessage(chatId, 'Дата не может быть в прошлом. Укажите сегодняшнюю или будущую дату.');
+        sendAndTrackMessage(chatId, 'Дата не может быть в прошлом. Укажите сегодняшнюю или будущую дату.');
       } else if (inputDate > maxDate) {
-        bot.sendMessage(chatId, 'Дата не может быть позже, чем через 7 дней от сегодняшнего дня.');
+        sendAndTrackMessage(chatId, 'Дата не может быть позже, чем через 7 дней от сегодняшнего дня.');
       } else {
         userState.responses.date = text;
         userState.step = 'search_4';
-        bot.sendMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30):');
+        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30):');
       }
     }
   }
@@ -710,7 +736,7 @@ function handleSearchService(chatId, text, userState, userId) {
   
       // Проверка: часы и минуты должны быть в корректных диапазонах
       if (startH < 0 || startH > 23 || startM < 0 || startM > 59 || endH < 0 || endH > 23 || endM < 0 || endM > 59) {
-        bot.sendMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
+        sendAndTrackMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
         break;
       }
   
@@ -731,7 +757,7 @@ function handleSearchService(chatId, text, userState, userId) {
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
-          bot.sendMessage(
+          sendAndTrackMessage(
             chatId,
             `Начальное время услуги не может быть меньше или равно текущему времени (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
           );
@@ -743,36 +769,36 @@ function handleSearchService(chatId, text, userState, userId) {
       // Если время корректно, сохраняем его и переходим к следующему шагу
       userState.responses.time = text;
       userState.step = 'search_5';
-      bot.sendMessage(chatId, 'Укажите сумму (например, 5000):');
+      sendAndTrackMessage(chatId, 'Укажите сумму (например, 5000):');
     } else {
       // Сообщение об ошибке формата
-      bot.sendMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
+      sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
     }
     break;
     
     case 'search_5':
       userState.responses.amount = text;
       userState.step = 'search_6';
-      bot.sendMessage(chatId, 'Timer:');
+      sendAndTrackMessage(chatId, 'Timer:');
       break;
 
       case 'search_6':
         const Timer = Number(text); // Преобразуем текст в число
         if (isNaN(Timer) || Timer < 1 || Timer > 24 || !Number.isInteger(Timer)) {
-          bot.sendMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+          sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
           break;
         }
       
         // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
         userState.responses.timer = text;
         userState.step = 'search_7';
-        bot.sendMessage(chatId, 'Опишите, какую услугу вы ищете:');
+        sendAndTrackMessage(chatId, 'Опишите, какую услугу вы ищете:');
         break;
 
     case 'search_7':
       userState.responses.description = text;
       userState.step = 'search_8';
-      bot.sendMessage(chatId, 'Contact:');
+      sendAndTrackMessage(chatId, 'Contact:');
       break;
 
     case 'search_8':
@@ -881,7 +907,7 @@ function handleSearchService(chatId, text, userState, userId) {
               // Сообщение в случае отсутствия предложений по стране
               bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
             }
-            
+            deleteAllTrackedMessages(chatId);
             delete states[chatId];
             break;
             
