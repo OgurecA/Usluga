@@ -553,6 +553,13 @@ bot.onText(/\/start/, (msg) => {
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 
+function trackMessage(chatId, messageId) {
+  if (!messagesToDelete[chatId]) {
+    messagesToDelete[chatId] = [];
+  }
+  messagesToDelete[chatId].push(messageId);
+}
+
 // Функция для отправки и отслеживания сообщений
 function sendAndTrackMessage(chatId, message, options = {}) {
   return bot.sendMessage(chatId, message, options).then((sentMsg) => {
@@ -586,6 +593,8 @@ bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
   const userId = msg.from.id;
+
+  trackMessage(chatId, msg.message_id);
 
   if (text === 'Ищу услугу') {  
     // Достаем все заявки пользователя на поиск услуг из базы данных
@@ -661,6 +670,7 @@ bot.on('message', (msg) => {
 // ---------------------------------------------
 
 function handleSearchService(chatId, text, userState, userId) {
+  trackMessage(chatId, msg.message_id);
   switch (userState.step) {
     case 'search_1':
       const bestMatchCountry = findClosestCountry(text);
