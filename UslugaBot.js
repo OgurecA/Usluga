@@ -669,7 +669,7 @@ bot.on('message', (msg) => {
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
 // ---------------------------------------------
 
-function handleSearchService(chatId, text, userState, userId) {
+function handleSearchService(chatId, text, userState, userId, msg) {
   trackMessage(chatId, msg.message_id);
   switch (userState.step) {
     case 'search_1':
