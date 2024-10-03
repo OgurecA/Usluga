@@ -600,11 +600,13 @@ bot.on('message', (msg) => {
     const userSearchRequests = db.getSearchRequestsByUser(userId);
   
     // Проверяем количество активных заявок
-    if (userSearchRequests.length >= 3) {
+    if (userSearchRequests.length >= 5) {
+      deleteAllTrackedMessages(chatId);
       // Если заявок 3 или больше, отправляем сообщение об ограничении
       sendAndTrackMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите пока они удалятся автоматически или удалите их вручную.');
       return;
     } else {
+      deleteAllTrackedMessages(chatId);
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу?');
