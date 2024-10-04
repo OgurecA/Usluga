@@ -529,7 +529,8 @@ const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
 
 // Обработчик команды /start
 bot.onText(/\/start/, (msg) => {
-  deleteTrackedStartMessages();
+  deleteTrackedStartMessages(msg.chat.id);  // Удаление старых сообщений перед новым стартом
+  trackStart(msg.chat.id, msg.message_id);
   const chatId = msg.chat.id;
   const userId = msg.from.id; 
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
@@ -687,17 +688,6 @@ bot.on('message', (msg) => {
   }
 });
 
-
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  const messageId = msg.message_id;
-
-  // Отслеживаем только сообщение /start
-  trackStart(chatId, messageId);
-
-  // Пример ответа на команду /start
-  bot.sendMessage(chatId, `Привет! Ваше сообщение /start отслеживается. ID сообщения: ${messageId}.`);
-});
 
 // ---------------------------------------------
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
