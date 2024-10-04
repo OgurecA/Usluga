@@ -550,7 +550,7 @@ bot.onText(/\/start/, (msg) => {
   };
 
   // Отправляем сообщение с кнопками на месте клавиатуры
-  bot.sendMessage(chatId, message, options);
+  sendAndTrackStartMessage(chatId, message, options);
 });
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
@@ -577,6 +577,15 @@ async function sendAndTrackMessage(chatId, message, options = {}) {
     messagesToDelete[chatId] = [];
   }
   messagesToDelete[chatId].push(sentMsg.message_id);
+  return sentMsg;
+}
+
+async function sendAndTrackStartMessage(chatId, message, options = {}) {
+  const sentMsg = await bot.sendMessage(chatId, message, options);
+  if (!deleteStart[chatId]) {
+    deleteStart[chatId] = [];
+  }
+  deleteStart[chatId].push(sentMsg.message_id);
   return sentMsg;
 }
 
