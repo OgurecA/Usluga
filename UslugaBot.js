@@ -529,6 +529,7 @@ const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
 
 // Обработчик команды /start
 bot.onText(/\/start/, (msg) => {
+  deleteTrackedStartMessages();
   const chatId = msg.chat.id;
   const userId = msg.from.id; 
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
@@ -552,12 +553,20 @@ bot.onText(/\/start/, (msg) => {
 });
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
+const deleteStart = {};
 
 function trackMessage(chatId, messageId) {
   if (!messagesToDelete[chatId]) {
     messagesToDelete[chatId] = [];
   }
   messagesToDelete[chatId].push(messageId);
+}
+
+function trackStart(chatId, messageId) {
+  if (!deleteStart[chatId]) {
+    deleteStart[chatId] = [];
+  }
+  deleteStart[chatId].push(messageId);
 }
 
 // Функция для отправки и отслеживания сообщений
@@ -580,6 +589,17 @@ function deleteAllTrackedMessages(chatId) {
     });
     // Очищаем список сообщений после удаления
     messagesToDelete[chatId] = [];
+  }
+}
+
+function deleteTrackedStartMessages(chatId) {
+  if (deleteStart[chatId]) {
+    deleteStart[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.error(`Ошибка при удалении сообщения /start: ${error}`);
+      });
+    });
+    deleteStart[chatId] = [];
   }
 }
 
@@ -667,6 +687,17 @@ bot.on('message', (msg) => {
   }
 });
 
+
+bot.onText(/\/start/, (msg) => {
+  const chatId = msg.chat.id;
+  const messageId = msg.message_id;
+
+  // Отслеживаем только сообщение /start
+  trackStart(chatId, messageId);
+
+  // Пример ответа на команду /start
+  bot.sendMessage(chatId, `Привет! Ваше сообщение /start отслеживается. ID сообщения: ${messageId}.`);
+});
 
 // ---------------------------------------------
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
