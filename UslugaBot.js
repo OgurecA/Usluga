@@ -516,7 +516,7 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
-
+const chatId = msg.chat.id;
 
 
 // Регулярные выражения для валидации данных
