@@ -1237,6 +1237,6 @@ function findClosestCountry(input) {
 
   return highestScore > 0.7 ? bestMatch : null;
 }
-
+deleteTrackedStartMessages(chatId);
 // Запуск бота
 console.log("Бот запущен и готов к работе...");
