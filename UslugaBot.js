@@ -534,6 +534,11 @@ bot.onText(/\/start/, async (msg) => {
 
   await deleteTrackedStartMessages(chatId);  // Удаление старых сообщений перед новым стартом
   trackStart(chatId, msg.message_id);
+
+  if (states[chatId]) {
+    delete states[chatId]; // Удаляем состояние пользователя из хранилища
+    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+  }
   
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
   const message = `Аккаунт успешно создан для ${username}.`;
