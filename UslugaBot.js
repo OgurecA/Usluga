@@ -528,11 +528,13 @@ const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
 // ---------------------------------------------
 
 // Обработчик команды /start
-bot.onText(/\/start/, (msg) => {
-  deleteTrackedStartMessages(msg.chat.id);  // Удаление старых сообщений перед новым стартом
-  trackStart(msg.chat.id, msg.message_id);
+bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id; 
+
+  await deleteTrackedStartMessages(chatId);  // Удаление старых сообщений перед новым стартом
+  trackStart(chatId, msg.message_id);
+  
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
   const message = `Аккаунт успешно создан для ${username}.`;
   console.log(userId);
@@ -550,11 +552,13 @@ bot.onText(/\/start/, (msg) => {
   };
 
   // Отправляем сообщение с кнопками на месте клавиатуры
-  sendAndTrackStartMessage(chatId, message, options);
+  setTimeout(async () => {
+    await sendAndTrackStartMessage(chatId, message, options);
+  }, 500); 
 });
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
-const deleteStart = {};
+const startMessagesToDelete = {};
 
 function trackMessage(chatId, messageId) {
   if (!messagesToDelete[chatId]) {
@@ -564,10 +568,10 @@ function trackMessage(chatId, messageId) {
 }
 
 function trackStart(chatId, messageId) {
-  if (!deleteStart[chatId]) {
-    deleteStart[chatId] = [];
+  if (!startMessagesToDelete[chatId]) {
+    startMessagesToDelete[chatId] = [];
   }
-  deleteStart[chatId].push(messageId);
+  startMessagesToDelete[chatId].push(messageId);
 }
 
 // Функция для отправки и отслеживания сообщений
@@ -580,13 +584,13 @@ async function sendAndTrackMessage(chatId, message, options = {}) {
   return sentMsg;
 }
 
-async function sendAndTrackStartMessage(chatId, message, options = {}) {
-  const sentMsg = await bot.sendMessage(chatId, message, options);
-  if (!deleteStart[chatId]) {
-    deleteStart[chatId] = [];
+async function sendAndTrackStartMessage(chatId, message, options) {
+  try {
+    const sentMsg = await bot.sendMessage(chatId, message, options);
+    trackStart(chatId, sentMsg.message_id);
+  } catch (err) {
+    console.log(`Ошибка отправки сообщения: ${err.message}`);
   }
-  deleteStart[chatId].push(sentMsg.message_id);
-  return sentMsg;
 }
 
 // Функция для удаления всех отслеживаемых сообщений для определенного чата
@@ -602,14 +606,16 @@ function deleteAllTrackedMessages(chatId) {
   }
 }
 
-function deleteTrackedStartMessages(chatId) {
-  if (deleteStart[chatId]) {
-    deleteStart[chatId].forEach((messageId) => {
-      bot.deleteMessage(chatId, messageId).catch((error) => {
-        console.error(`Ошибка при удалении сообщения /start: ${error}`);
-      });
-    });
-    deleteStart[chatId] = [];
+async function deleteTrackedStartMessages(chatId) {
+  if (startMessagesToDelete[chatId]) {
+    for (const messageId of startMessagesToDelete[chatId]) {
+      try {
+        await bot.deleteMessage(chatId, messageId);
+      } catch (err) {
+        console.log(`Ошибка удаления сообщения ${messageId}: ${err.message}`);
+      }
+    }
+    startMessagesToDelete[chatId] = [];
   }
 }
 
