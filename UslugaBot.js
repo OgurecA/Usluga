@@ -564,6 +564,7 @@ bot.onText(/\/start/, async (msg) => {
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 const startMessagesToDelete = {};
+const listMessagesToDelete = {};
 
 function trackMessage(chatId, messageId) {
   if (!messagesToDelete[chatId]) {
@@ -577,6 +578,13 @@ function trackStart(chatId, messageId) {
     startMessagesToDelete[chatId] = [];
   }
   startMessagesToDelete[chatId].push(messageId);
+}
+
+function trackList(chatId, messageId) {
+  if (!listMessagesToDelete[chatId]) {
+    listMessagesToDelete[chatId] = [];
+  }
+  listMessagesToDelete[chatId].push(messageId);
 }
 
 // Функция для отправки и отслеживания сообщений
@@ -596,6 +604,12 @@ async function sendAndTrackStartMessage(chatId, message, options) {
   } catch (err) {
     console.log(`Ошибка отправки сообщения: ${err.message}`);
   }
+}
+
+async function sendAndTrackListMessage(chatId, message, options = {}) {
+  const sentMsg = await bot.sendMessage(chatId, message, options);
+  trackList(chatId, sentMsg.message_id);
+  return sentMsg;
 }
 
 // Функция для удаления всех отслеживаемых сообщений для определенного чата
@@ -624,6 +638,16 @@ async function deleteTrackedStartMessages(chatId) {
   }
 }
 
+function deleteAllTrackedListMessages(chatId) {
+  if (listMessagesToDelete[chatId]) {
+    listMessagesToDelete[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.log(`Ошибка при удалении сообщения: ${error}`);
+      });
+    });
+    listMessagesToDelete[chatId] = [];
+  }
+}
 
 // ---------------------------------------------
 // ОБРАБОТКА СООБЩЕНИЙ ОТ ПОЛЬЗОВАТЕЛЯ
@@ -667,6 +691,9 @@ bot.on('message', (msg) => {
       sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
     }
   } else if (text === 'Мои заявки') {
+
+    deleteAllTrackedListMessages(chatId);
+    trackList(chatId, msg.message_id);
     // Логика получения заявок пользователя
     const searchRequests = db.getSearchRequestsByUser(userId);
     const offerRequests = db.getOfferRequestsByUser(userId);
@@ -678,7 +705,7 @@ bot.on('message', (msg) => {
         searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
       // Отправка сообщения только с заявками на поиск
-      bot.sendMessage(chatId, searchMessage);
+      sendAndTrackListMessage(chatId, searchMessage);
     }
   
     // Если есть заявки на предоставление услуг
@@ -688,12 +715,12 @@ bot.on('message', (msg) => {
         offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
       // Отправка сообщения только с заявками на предоставление
-      bot.sendMessage(chatId, offerMessage);
+      sendAndTrackListMessage(chatId, offerMessage);
     }
   
     // Если нет ни заявок на поиск, ни заявок на предоставление услуг
     if (searchRequests.length === 0 && offerRequests.length === 0) {
-      bot.sendMessage(chatId, 'У вас нет активных заявок.');
+      sendAndTrackListMessage(chatId, 'У вас нет активных заявок.');
     }
   
   } else {
