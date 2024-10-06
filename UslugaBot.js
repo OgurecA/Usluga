@@ -541,6 +541,9 @@ bot.onText(/\/start/, async (msg) => {
       deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
     }, 500); 
   }
+  setTimeout(() => {
+    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+  }, 500); 
   
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
   const message = `Аккаунт успешно создан для ${username}.\n/help`;
@@ -579,6 +582,9 @@ bot.onText(/\/help/, async (msg) => {
       deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
     }, 500); 
   }
+  setTimeout(() => {
+    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+  }, 500); 
 
   // Сообщение помощи с кратким описанием команд
   const helpMessage = `
@@ -771,6 +777,9 @@ bot.on('message', (msg) => {
         deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
       }, 500); 
     }
+    setTimeout(() => {
+      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    }, 500); 
   
     // Если есть заявки на поиск услуг
     if (searchRequests.length > 0) {
