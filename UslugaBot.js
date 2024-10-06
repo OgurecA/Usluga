@@ -771,8 +771,16 @@ bot.on('message', (msg) => {
       searchRequests.forEach((req, index) => {
         searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
+
+      const searchOptions = {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Удалить заявку на поиск', callback_data: 'delete_search' }],
+          ],
+        },
+      };
       // Отправка сообщения только с заявками на поиск
-      sendAndTrackListMessage(chatId, searchMessage);
+      sendAndTrackListMessage(chatId, searchMessage, searchOptions);
     }
   
     // Если есть заявки на предоставление услуг
@@ -781,8 +789,17 @@ bot.on('message', (msg) => {
       offerRequests.forEach((req, index) => {
         offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
+
+      const offerOptions = {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Удалить заявку предложения', callback_data: 'delete_offer' }],
+          ],
+        },
+      };
+  
       // Отправка сообщения только с заявками на предоставление
-      sendAndTrackListMessage(chatId, offerMessage);
+      sendAndTrackListMessage(chatId, offerMessage, offerOptions);
     }
   
     // Если нет ни заявок на поиск, ни заявок на предоставление услуг
