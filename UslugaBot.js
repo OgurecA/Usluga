@@ -890,6 +890,7 @@ bot.on('message', (msg) => {
         // Используем новую функцию для удаления заявки на поиск услуг
         db.deleteSearchRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
         sendAndTrackMessage(chatId, `Заявка на поиск услуг номер ${text} была успешно удалена.`);
+        deleteAllTrackedListMessages(chatId);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
@@ -907,6 +908,7 @@ bot.on('message', (msg) => {
         // Используем новую функцию для удаления заявки на предоставление услуг
         db.deleteOfferRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
         sendAndTrackMessage(chatId, `Заявка на предоставление услуг номер ${text} была успешно удалена.`);
+        deleteAllTrackedListMessages(chatId);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
