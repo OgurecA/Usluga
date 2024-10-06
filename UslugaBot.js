@@ -764,6 +764,13 @@ bot.on('message', (msg) => {
     // Логика получения заявок пользователя
     const searchRequests = db.getSearchRequestsByUser(userId);
     const offerRequests = db.getOfferRequestsByUser(userId);
+
+    if (states[chatId]) {
+      delete states[chatId]; // Удаляем состояние пользователя из хранилища
+      setTimeout(() => {
+        deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+      }, 500); 
+    }
   
     // Если есть заявки на поиск услуг
     if (searchRequests.length > 0) {
@@ -823,6 +830,63 @@ bot.on('message', (msg) => {
   }
 });
 
+// Обработка нажатий на inline кнопки
+bot.on('callback_query', async (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const messageId = callbackQuery.message.message_id;
+  const userId = callbackQuery.from.id;
+  const data = callbackQuery.data;
+
+  // Если нажата кнопка "Удалить заявку на поиск"
+  if (data === 'delete_search') {
+    states[chatId] = { step: 'delete_search_request', requests: db.getSearchRequestsByUser(userId) };
+    sendAndTrackMessage(chatId, 'Введите номер заявки на поиск, которую хотите удалить (например, 1, 2, 3).');
+  }
+  // Если нажата кнопка "Удалить заявку предложения"
+  else if (data === 'delete_offer') {
+    states[chatId] = { step: 'delete_offer_request', requests: db.getOfferRequestsByUser(userId) };
+    sendAndTrackMessage(chatId, 'Введите номер заявки предложения, которую хотите удалить (например, 1, 2, 3).');
+  }
+
+});
+
+bot.on('message', (msg) => {
+  const chatId = msg.chat.id;
+  const text = msg.text;
+  const userId = msg.from.id;
+
+  // Проверка на ввод номера заявки для удаления
+  if (states[chatId]) {
+    const userState = states[chatId];
+    if (userState.step === 'delete_search_request') {
+      const index = parseInt(text, 10) - 1;
+      if (index >= 0 && index < userState.requests.length) {
+        const selectedRequest = userState.requests[index];
+        // Удаляем выбранную заявку на поиск услуг
+        db.prepare('DELETE FROM search WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?')
+          .run(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
+
+          sendAndTrackMessage(chatId, `Заявка на поиск услуг номер ${text} была успешно удалена.`);
+      } else {
+        sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
+      }
+      delete states[chatId];
+    } else if (userState.step === 'delete_offer_request') {
+      const index = parseInt(text, 10) - 1;
+      if (index >= 0 && index < userState.requests.length) {
+        const selectedRequest = userState.requests[index];
+        // Удаляем выбранную заявку на предоставление услуг
+        db.prepare('DELETE FROM offer WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?')
+          .run(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
+
+          sendAndTrackMessage(chatId, `Заявка на предоставление услуг номер ${text} была успешно удалена.`);
+      } else {
+        sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
+      }
+      delete states[chatId];
+    }
+  }
+});
 
 // ---------------------------------------------
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
