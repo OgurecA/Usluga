@@ -725,7 +725,7 @@ bot.on('message', (msg) => {
 
     setTimeout(() => {
       deleteAllTrackedListMessages(chatId);
-    }, 10000);
+    }, (15 * 60 * 1000));
   
   } else {
     if (states[chatId]) {
