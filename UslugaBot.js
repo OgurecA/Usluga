@@ -566,9 +566,12 @@ bot.onText(/\/start/, async (msg) => {
 
 
 // Обработка команды /help
-bot.onText(/\/help/, (msg) => {
+bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
+
+  deleteAllTrackedHelpMessages(chatId);  // Удаление старых сообщений перед новым стартом
+  trackHelp(chatId, msg.message_id);
 
   if (states[chatId]) {
     delete states[chatId]; // Удаляем состояние пользователя из хранилища
@@ -591,7 +594,9 @@ bot.onText(/\/help/, (msg) => {
   `;
 
   // Отправка сообщения с помощью и отслеживание его ID (в дальнейшем это можно использовать для удаления или дополнительной обработки)
-  bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' })
+  setTimeout(async () => {
+    await sendAndTrackHelpMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
+  }, 500); 
 });
 
 
@@ -599,8 +604,12 @@ bot.onText(/\/help/, (msg) => {
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 const startMessagesToDelete = {};
 const listMessagesToDelete = {};
+const helpMessagesToDelete = {};
 
-function trackMessage(chatId, messageId) {
+function trackMessage(chatId, messageId, text) {
+  // Игнорируем команды /start и /help
+  if (text === '/start' || text === '/help') return;
+
   if (!messagesToDelete[chatId]) {
     messagesToDelete[chatId] = [];
   }
@@ -619,6 +628,13 @@ function trackList(chatId, messageId) {
     listMessagesToDelete[chatId] = [];
   }
   listMessagesToDelete[chatId].push(messageId);
+}
+
+function trackHelp(chatId, messageId) {
+  if (!helpMessagesToDelete[chatId]) {
+    helpMessagesToDelete[chatId] = [];
+  }
+  helpMessagesToDelete[chatId].push(messageId);
 }
 
 // Функция для отправки и отслеживания сообщений
@@ -643,6 +659,12 @@ async function sendAndTrackStartMessage(chatId, message, options) {
 async function sendAndTrackListMessage(chatId, message, options = {}) {
   const sentMsg = await bot.sendMessage(chatId, message, options);
   trackList(chatId, sentMsg.message_id);
+  return sentMsg;
+}
+
+async function sendAndTrackHelpMessage(chatId, message, options = {}) {
+  const sentMsg = await bot.sendMessage(chatId, message, options);
+  trackHelp(chatId, sentMsg.message_id);
   return sentMsg;
 }
 
@@ -683,6 +705,17 @@ function deleteAllTrackedListMessages(chatId) {
   }
 }
 
+function deleteAllTrackedHelpMessages(chatId) {
+  if (helpMessagesToDelete[chatId]) {
+    helpMessagesToDelete[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.log(`Ошибка при удалении сообщения: ${error}`);
+      });
+    });
+    helpMessagesToDelete[chatId] = [];
+  }
+}
+
 // ---------------------------------------------
 // ОБРАБОТКА СООБЩЕНИЙ ОТ ПОЛЬЗОВАТЕЛЯ
 // ---------------------------------------------
@@ -692,14 +725,14 @@ bot.on('message', (msg) => {
   const text = msg.text;
   const userId = msg.from.id;
 
-  trackMessage(chatId, msg.message_id);
+  trackMessage(chatId, msg.message_id, text);
 
   if (text === 'Ищу услугу') {  
     // Достаем все заявки пользователя на поиск услуг из базы данных
     const userSearchRequests = db.getSearchRequestsByUser(userId);
   
     // Проверяем количество активных заявок
-    if (userSearchRequests.length >= 5) {
+    if (userSearchRequests.length >= 3) {
       deleteAllTrackedMessages(chatId);
       // Если заявок 3 или больше, отправляем сообщение об ограничении
       sendAndTrackMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите пока они удалятся автоматически или удалите их вручную.');
