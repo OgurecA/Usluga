@@ -1157,34 +1157,7 @@ function handleSearchService(chatId, text, userState, userId) {
                 sortedOffers = relevantOffers.slice(0, 5);
               }
             
-              bot.on('callback_query', (callbackQuery) => {
-                const chatId = callbackQuery.message.chat.id;
-                const messageId = callbackQuery.message.message_id;
-                const userId = callbackQuery.from.id;
-                const data = callbackQuery.data;
               
-                // Если нажата кнопка "Ответить" на предложении
-                if (data.startsWith('reply_')) {
-                  // Извлекаем ID предложения из callback_data (формат: reply_ID)
-                  const offerId = data.split('_')[1];
-              
-                  // Ищем предложение в базе данных по этому ID
-                  const offer = db.getOfferById(offerId);
-              
-                  if (offer) {
-                    // Формируем сообщение с контактной информацией и описанием заявки
-                    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
-                                         `Описание услуги: ${offer.description}\n` +
-                                         `Контакт: ${offer.contact}\n\n` +
-                                         `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-              
-                    // Отправляем сообщение пользователю
-                    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
-                  } else {
-                    bot.sendMessage(chatId, 'Извините, предложение больше не доступно.');
-                  }
-                }
-              });
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
@@ -1198,10 +1171,15 @@ function handleSearchService(chatId, text, userState, userId) {
                                      `Контакт: ${offer.contact}`;
             
                   // Кнопка "Ответить"
+                  const encodedOfferData = JSON.stringify({
+                    description: offer.description,
+                    contact: offer.contact
+                  });
+
                   const replyOptions = {
                     reply_markup: {
                       inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                        [{ text: 'Ответить', callback_data: `reply_${encodedOfferData}` }],
                       ],
                     },
                     parse_mode: 'Markdown',
@@ -1212,6 +1190,26 @@ function handleSearchService(chatId, text, userState, userId) {
                     sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
                   }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
                 });
+                bot.on('callback_query', (callbackQuery) => {
+                  const chatId = callbackQuery.message.chat.id;
+                  const data = callbackQuery.data;
+                
+                  // Проверяем, начинается ли callback_data с 'reply_'
+                  if (data.startsWith('reply_')) {
+                    // Извлекаем и декодируем информацию о предложении из callback_data
+                    const offerInfo = JSON.parse(data.replace('reply_', ''));
+                
+                    // Формируем сообщение с контактной информацией и подробностями заявки
+                    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+                                         `Описание услуги: ${offerInfo.description}\n` +
+                                         `Контакт: ${offerInfo.contact}\n\n` +
+                                         `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+                
+                    // Отправляем сообщение пользователю
+                    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
+                  }
+                });
+                
             
               } else {
                 // Сообщение в случае отсутствия предложений
