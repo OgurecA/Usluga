@@ -570,7 +570,9 @@ bot.onText(/\/help/, (msg) => {
 
   if (states[chatId]) {
     delete states[chatId]; // Удаляем состояние пользователя из хранилища
-    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    setTimeout( () => {
+      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    }, 500); 
   }
 
   // Сообщение помощи с кратким описанием команд
