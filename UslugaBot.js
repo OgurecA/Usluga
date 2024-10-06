@@ -297,6 +297,7 @@ const countryMapping = {
   'Куба': 'Cuba',
   'Доминикана': 'Dominican Republic',
   'Гаити': 'Haiti',
+  'Гватемала': 'Guatemala',
   'Ямайка': 'Jamaica',
   'Панама': 'Panama',
   'Пуэрто-Рико': 'Puerto Rico',
@@ -1131,15 +1132,31 @@ function handleSearchService(chatId, text, userState, userId) {
             
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
-                let offersMessage = '📋 *Релевантные предложения услуг*:\n/help\n\n';
-                sortedOffers.forEach((req, index) => {
-                  offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
-                });
+                sortedOffers.forEach((offer, index) => {
+                  let offerMessage = `📋 *Предложение ${index + 1}*:\n\n` +
+                                     `Страна: ${offer.country}\n` +
+                                     `Город: ${offer.city}\n` +
+                                     `Дата: ${offer.date}\n` +
+                                     `Время: ${offer.time}\n` +
+                                     `Сумма: ${offer.amount}\n` +
+                                     `Описание: ${offer.description}\n` +
+                                     `Контакт: ${offer.contact}`;
             
-                // Отправляем сообщение с задержкой в 1 секунду
-                setTimeout(() => {
-                  bot.sendMessage(chatId, offersMessage);
-                }, 500); // Задержка в 1000 миллисекунд (1 секунда)
+                  // Кнопка "Ответить"
+                  const replyOptions = {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                      ],
+                    },
+                    parse_mode: 'Markdown',
+                  };
+            
+                  // Отправляем каждое предложение отдельно с кнопкой
+                  setTimeout(() => {
+                    sendAndTrackMessage(chatId, offerMessage, replyOptions);
+                  }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
+                });
             
               } else {
                 // Сообщение в случае отсутствия предложений
