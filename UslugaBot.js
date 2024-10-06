@@ -533,6 +533,7 @@ bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id; 
 
+  deleteAllTrackedResultMessages(chatId);
   await deleteTrackedStartMessages(chatId);  // Удаление старых сообщений перед новым стартом
   trackStart(chatId, msg.message_id);
 
@@ -574,6 +575,7 @@ bot.onText(/\/help/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
 
+  deleteAllTrackedResultMessages(chatId);
   deleteAllTrackedHelpMessages(chatId);  // Удаление старых сообщений перед новым стартом
   trackHelp(chatId, msg.message_id);
 
@@ -612,6 +614,7 @@ const messagesToDelete = {}; // Глобальное хранилище для �
 const startMessagesToDelete = {};
 const listMessagesToDelete = {};
 const helpMessagesToDelete = {};
+const resultMessagesToDelete = {};
 
 function trackMessage(chatId, messageId, text) {
   // Игнорируем команды /start и /help
@@ -654,6 +657,15 @@ async function sendAndTrackMessage(chatId, message, options = {}) {
   return sentMsg;
 }
 
+async function sendAndTrackResultMessage(chatId, message, options = {}) {
+  const sentMsg = await bot.sendMessage(chatId, message, options);
+  if (!resultMessagesToDelete[chatId]) {
+    resultMessagesToDelete[chatId] = [];
+  }
+  resultMessagesToDelete[chatId].push(sentMsg.message_id);
+  return sentMsg;
+}
+
 async function sendAndTrackStartMessage(chatId, message, options) {
   try {
     const sentMsg = await bot.sendMessage(chatId, message, options);
@@ -685,6 +697,18 @@ function deleteAllTrackedMessages(chatId) {
     });
     // Очищаем список сообщений после удаления
     messagesToDelete[chatId] = [];
+  }
+}
+
+function deleteAllTrackedResultMessages(chatId) {
+  if (resultMessagesToDelete[chatId]) {
+    resultMessagesToDelete[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.log(`Ошибка при удалении сообщения: ${error}`);
+      });
+    });
+    // Очищаем список сообщений после удаления
+    resultMessagesToDelete[chatId] = [];
   }
 }
 
@@ -746,6 +770,7 @@ bot.on('message', (msg) => {
       return;
     } else {
       deleteAllTrackedMessages(chatId);
+      deleteAllTrackedResultMessages(chatId);
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу? (Россия, Китай, Франция)');
@@ -761,12 +786,14 @@ bot.on('message', (msg) => {
       sendAndTrackMessage(chatId, 'Вы не можете одновременно предоставлять больше 3 услуг. Подождите, пока они удалятся автоматически, или удалите их вручную.');
     } else {
       deleteAllTrackedMessages(chatId);
+      deleteAllTrackedResultMessages(chatId);
       states[chatId] = { step: 'provide_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
     }
   } else if (text === 'Мои заявки') {
 
     deleteAllTrackedListMessages(chatId);
+    deleteAllTrackedResultMessages(chatId);
     trackList(chatId, msg.message_id);
     // Логика получения заявок пользователя
     const searchRequests = db.getSearchRequestsByUser(userId);
@@ -1083,7 +1110,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
       
-      bot.sendMessage(chatId, searchSummary);
+      sendAndTrackResultMessage(chatId, searchSummary);
 
             // Получение всех предложений из таблицы `offer`
             const offerRequests = db.getOffersByCountry(userState.responses.country);
@@ -1133,7 +1160,7 @@ function handleSearchService(chatId, text, userState, userId) {
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
-                  let offerMessage = `📋 *Предложение ${index + 1}*:\n\n` +
+                  let offerMessage = `📋 *Предложение*\n\n` +
                                      `Страна: ${offer.country}\n` +
                                      `Город: ${offer.city}\n` +
                                      `Дата: ${offer.date}\n` +
@@ -1154,7 +1181,7 @@ function handleSearchService(chatId, text, userState, userId) {
             
                   // Отправляем каждое предложение отдельно с кнопкой
                   setTimeout(() => {
-                    sendAndTrackMessage(chatId, offerMessage, replyOptions);
+                    sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
                   }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
                 });
             
@@ -1164,24 +1191,43 @@ function handleSearchService(chatId, text, userState, userId) {
 
                 if (cityMatches.length === 0) {
                   setTimeout(() => {
-                    bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
+                    sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
                   }, 500);
                 } else {
                   // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
                   const alternativeOffers = cityMatches.filter((offer) => offer.descriptionSimilarity >= 0.3);
 
                   if (alternativeOffers.length > 0) {
-                    let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n';
-                    alternativeOffers.slice(0, 5).forEach((req, index) => {
-                      alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
+                    sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
+                
+                    alternativeOffers.forEach((offer, index) => {
+                      let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
+                                               `Страна: ${offer.country}\n` +
+                                               `Город: ${offer.city}\n` +
+                                               `Дата: ${offer.date}\n` +
+                                               `Время: ${offer.time}\n` +
+                                               `Сумма: ${offer.amount}\n` +
+                                               `Описание: ${offer.description}\n` +
+                                               `Контакт: ${offer.contact}`;
+              
+                      // Кнопка "Ответить"
+                      const alternativeOptions = {
+                        reply_markup: {
+                          inline_keyboard: [
+                            [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                          ],
+                        },
+                        parse_mode: 'Markdown',
+                      };
+              
+                      // Отправляем каждое альтернативное предложение отдельно с кнопкой
+                      setTimeout(() => {
+                        sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
+                      }, index * 100); // Задержка перед отправкой каждого сообщения
                     });
-
-                    setTimeout(() => {
-                      bot.sendMessage(chatId, alternativesMessage);
-                    }, 500); // Задержка в 1 секунду
                   } else {
                     setTimeout(() => {
-                      bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
+                      sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
                     }, 500);
                   }
                 }
@@ -1191,7 +1237,7 @@ function handleSearchService(chatId, text, userState, userId) {
             } else {
               // Сообщение в случае отсутствия предложений по стране
               setTimeout(() => {
-                bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
               }, 500);
             }
             deleteAllTrackedMessages(chatId);
@@ -1343,7 +1389,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
       
-      bot.sendMessage(chatId, searchSummary);
+      sendAndTrackResultMessage(chatId, searchSummary);
       
       const searchRequests = db.getSearchesByCountry(userState.responses.country);
 
@@ -1389,17 +1435,32 @@ function handleProvideService(chatId, text, userState, userId) {
           sortedSearches = relevantSearches.slice(0, 5);
         }
       
-        // Отправляем релевантные предложения, если они есть
-        if (sortedSearches.length > 0) {
-          let searchesMessage = '📋 *Релевантные объявления о поиске*:\n/help\n\n';
-          sortedSearches.forEach((req, index) => {
-            searchesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
-          });
-      
-          // Отправляем сообщение с задержкой в 1 секунду
-          setTimeout(() => {
-            bot.sendMessage(chatId, searchesMessage);
-          }, 500); // Задержка в 1000 миллисекунд (1 секунда)
+          if (sortedSearches.length > 0) {
+            sortedSearches.forEach((offer, index) => {
+              let searchMessage = `📋 *Заявки*\n\n` +
+                                 `Страна: ${offer.country}\n` +
+                                 `Город: ${offer.city}\n` +
+                                 `Дата: ${offer.date}\n` +
+                                 `Время: ${offer.time}\n` +
+                                 `Сумма: ${offer.amount}\n` +
+                                 `Описание: ${offer.description}\n` +
+                                 `Контакт: ${offer.contact}`;
+        
+              // Кнопка "Ответить"
+              const replyOptions = {
+                reply_markup: {
+                  inline_keyboard: [
+                    [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                  ],
+                },
+                parse_mode: 'Markdown',
+              };
+        
+              // Отправляем каждое предложение отдельно с кнопкой
+              setTimeout(() => {
+                sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
+              }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
+            });
       
         } else {
           // Сообщение в случае отсутствия предложений
@@ -1407,24 +1468,43 @@ function handleProvideService(chatId, text, userState, userId) {
 
           if (cityMatches.length === 0) {
             setTimeout(() => {
-              bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
+              sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
             }, 500);
           } else {
             // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
             const alternativeSearches = cityMatches.filter((search) => search.descriptionSimilarity >= 0.3);
 
-            if (alternativeSearches.length > 0) {
-              let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n';
-              alternativeSearches.slice(0, 5).forEach((req, index) => {
-                alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
-              });
+              if (alternativeSearches.length > 0) {
+                sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
 
-              setTimeout(() => {
-                bot.sendMessage(chatId, alternativesMessage);
-              }, 500); // Задержка в 1 секунду
+                alternativeSearches.forEach((offer, index) => {
+                  let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
+                                           `Страна: ${offer.country}\n` +
+                                           `Город: ${offer.city}\n` +
+                                           `Дата: ${offer.date}\n` +
+                                           `Время: ${offer.time}\n` +
+                                           `Сумма: ${offer.amount}\n` +
+                                           `Описание: ${offer.description}\n` +
+                                           `Контакт: ${offer.contact}`;
+          
+                  // Кнопка "Ответить"
+                  const alternativeOptions = {
+                    reply_markup: {
+                      inline_keyboard: [
+                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                      ],
+                    },
+                    parse_mode: 'Markdown',
+                  };
+          
+                  // Отправляем каждое альтернативное предложение отдельно с кнопкой
+                  setTimeout(() => {
+                    sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
+                  }, index * 100); // Задержка перед отправкой каждого сообщения
+                });
             } else {
               setTimeout(() => {
-                bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
               }, 500);
             }
           }
@@ -1433,7 +1513,7 @@ function handleProvideService(chatId, text, userState, userId) {
       } else {
         // Сообщение в случае отсутствия предложений по стране
         setTimeout(() => {
-          bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+          sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
       }, 500);
       }
       deleteAllTrackedMessages(chatId);
