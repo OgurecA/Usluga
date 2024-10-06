@@ -1157,6 +1157,34 @@ function handleSearchService(chatId, text, userState, userId) {
                 sortedOffers = relevantOffers.slice(0, 5);
               }
             
+              bot.on('callback_query', (callbackQuery) => {
+                const chatId = callbackQuery.message.chat.id;
+                const messageId = callbackQuery.message.message_id;
+                const userId = callbackQuery.from.id;
+                const data = callbackQuery.data;
+              
+                // Если нажата кнопка "Ответить" на предложении
+                if (data.startsWith('reply_')) {
+                  // Извлекаем ID предложения из callback_data (формат: reply_ID)
+                  const offerId = data.split('_')[1];
+              
+                  // Ищем предложение в базе данных по этому ID
+                  const offer = db.getOfferById(offerId);
+              
+                  if (offer) {
+                    // Формируем сообщение с контактной информацией и описанием заявки
+                    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+                                         `Описание услуги: ${offer.description}\n` +
+                                         `Контакт: ${offer.contact}\n\n` +
+                                         `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+              
+                    // Отправляем сообщение пользователю
+                    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
+                  } else {
+                    bot.sendMessage(chatId, 'Извините, предложение больше не доступно.');
+                  }
+                }
+              });
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
