@@ -722,6 +722,10 @@ bot.on('message', (msg) => {
     if (searchRequests.length === 0 && offerRequests.length === 0) {
       sendAndTrackListMessage(chatId, 'У вас нет активных заявок.');
     }
+
+    setTimeout(() => {
+      deleteAllTrackedListMessages(chatId);
+    }, 10000);
   
   } else {
     if (states[chatId]) {
