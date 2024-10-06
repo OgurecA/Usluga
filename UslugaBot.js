@@ -1154,38 +1154,43 @@ function handleSearchService(chatId, text, userState, userId) {
               }
             
               // Отправляем релевантные предложения, если они есть
+              // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
-                sortedOffers.forEach((offer, index) => {
-                  // Создаем текст сообщения
-                  let offerMessage = `📋 *Предложение ${index + 1}*:\n\n` +
-                                     `*Страна*: ${offer.country}\n` +
-                                     `*Город*: ${offer.city}\n` +
-                                     `*Дата*: ${offer.date}\n` +
-                                     `*Время*: ${offer.time}\n` +
-                                     `*Сумма*: ${offer.amount}\n` +
-                                     `*Описание*: ${offer.description}\n` +
-                                     `*Контакт*: ${offer.contact}`;
-              
-                  // Кнопка "Ответить"
-                  const replyOptions = {
-                    reply_markup: {
-                      inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                      ],
-                    },
-                    parse_mode: 'Markdown',
-                  };
-              
-                  // Отправляем каждое предложение отдельно с кнопкой
-                  setTimeout(async () => {
+                (async () => {
+                  for (let index = 0; index < sortedOffers.length; index++) {
+                    const offer = sortedOffers[index];
+
+                    // Создаем текст сообщения
+                    let offerMessage = `📋 *Предложение ${index + 1}*:\n\n` +
+                                      `*Страна*: ${offer.country}\n` +
+                                      `*Город*: ${offer.city}\n` +
+                                      `*Дата*: ${offer.date}\n` +
+                                      `*Время*: ${offer.time}\n` +
+                                      `*Сумма*: ${offer.amount}\n` +
+                                      `*Описание*: ${offer.description}\n` +
+                                      `*Контакт*: ${offer.contact}`;
+
+                    // Кнопка "Ответить"
+                    const replyOptions = {
+                      reply_markup: {
+                        inline_keyboard: [
+                          [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                        ],
+                      },
+                      parse_mode: 'Markdown',
+                    };
+
+                    // Используем задержку между отправками
                     try {
+                      await new Promise(resolve => setTimeout(resolve, 500)); // Задержка в 500 миллисекунд
                       await sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
                       console.log(`Сообщение ${index + 1} отправлено успешно.`);
                     } catch (error) {
                       console.error(`Ошибка при отправке сообщения ${index + 1}: ${error.message}`);
                     }
-                  }, index * 500); // Увеличьте задержку до 500 миллисекунд или более
-                });
+                  }
+                })();
+
               
               
             
