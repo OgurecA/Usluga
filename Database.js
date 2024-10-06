@@ -51,6 +51,25 @@ function removeExpiredRequests() {
   console.log(`Удалено ${changesOffer.changes} устаревших записей из таблицы offer.`);
 }
 
+const deleteSearchRequest = (userId, country, city, date, time, amount, description) => {
+  const query = `
+    DELETE FROM search 
+    WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?
+  `;
+  const statement = db.prepare(query);
+  statement.run(userId, country, city, date, time, amount, description);
+};
+
+// Функция удаления заявки на предоставление услуг по параметрам
+const deleteOfferRequest = (userId, country, city, date, time, amount, description) => {
+  const query = `
+    DELETE FROM offer 
+    WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?
+  `;
+  const statement = db.prepare(query);
+  statement.run(userId, country, city, date, time, amount, description);
+};
+
 // Функции работы с базой данных
 module.exports = {
   // Пример функции для добавления заявки в таблицу search
@@ -96,6 +115,10 @@ module.exports = {
   },
 
   removeExpiredRequests: removeExpiredRequests,
+
+  deleteSearchRequest,
+  
+  deleteOfferRequest,
 
   // Закрытие соединения с базой данных
   close: () => db.close(),

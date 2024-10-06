@@ -867,28 +867,29 @@ bot.on('message', (msg) => {
   // Проверка на ввод номера заявки для удаления
   if (states[chatId]) {
     const userState = states[chatId];
+
+    // Удаление заявки на поиск по индексу
     if (userState.step === 'delete_search_request') {
       const index = parseInt(text, 10) - 1;
       if (index >= 0 && index < userState.requests.length) {
         const selectedRequest = userState.requests[index];
-        // Удаляем выбранную заявку на поиск услуг
-        db.prepare('DELETE FROM search WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?')
-          .run(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
-
-          sendAndTrackMessage(chatId, `Заявка на поиск услуг номер ${text} была успешно удалена.`);
+        // Используем новую функцию для удаления заявки на поиск услуг
+        db.deleteSearchRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
+        sendAndTrackMessage(chatId, `Заявка на поиск услуг номер ${text} была успешно удалена.`);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
       delete states[chatId];
-    } else if (userState.step === 'delete_offer_request') {
+    }
+
+    // Удаление заявки на предложение по индексу
+    else if (userState.step === 'delete_offer_request') {
       const index = parseInt(text, 10) - 1;
       if (index >= 0 && index < userState.requests.length) {
         const selectedRequest = userState.requests[index];
-        // Удаляем выбранную заявку на предоставление услуг
-        db.prepare('DELETE FROM offer WHERE id = ? AND country = ? AND city = ? AND date = ? AND time = ? AND amount = ? AND description = ?')
-          .run(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
-
-          sendAndTrackMessage(chatId, `Заявка на предоставление услуг номер ${text} была успешно удалена.`);
+        // Используем новую функцию для удаления заявки на предоставление услуг
+        db.deleteOfferRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
+        sendAndTrackMessage(chatId, `Заявка на предоставление услуг номер ${text} была успешно удалена.`);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
