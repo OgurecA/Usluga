@@ -543,7 +543,7 @@ bot.onText(/\/start/, async (msg) => {
   }
   
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
-  const message = `Аккаунт успешно создан для ${username}.`;
+  const message = `Аккаунт успешно создан для ${username}.\n/help`;
   console.log(userId);
 
   // Кнопки выбора действия
@@ -741,7 +741,7 @@ bot.on('message', (msg) => {
       deleteAllTrackedMessages(chatId);
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
-      sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу?');
+      sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу? (Россия, Китай, Франция)');
     }
   } else if (text === 'Предоставляю услугу') {
     const userOfferRequests = db.getOfferRequestsByUser(userId);
@@ -751,11 +751,11 @@ bot.on('message', (msg) => {
     if (userOfferRequests.length >= 3) {
       deleteAllTrackedMessages(chatId);
       // Если заявок 3 или больше, отправляем сообщение об ограничении
-      sendAndTrackMessage(chatId, 'У вас не может одновременно быть больше 3 заявок на поиск. Подождите, пока они удалятся автоматически, или удалите их вручную.');
+      sendAndTrackMessage(chatId, 'Вы не можете одновременно предоставлять больше 3 услуг. Подождите, пока они удалятся автоматически, или удалите их вручную.');
     } else {
       deleteAllTrackedMessages(chatId);
       states[chatId] = { step: 'provide_1', responses: {} };
-      sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу?');
+      sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
     }
   } else if (text === 'Мои заявки') {
 
@@ -767,7 +767,7 @@ bot.on('message', (msg) => {
   
     // Если есть заявки на поиск услуг
     if (searchRequests.length > 0) {
-      let searchMessage = '🔍 **Ваши заявки на поиск услуг**:\n\n';
+      let searchMessage = '🔍 **Ваши заявки на поиск услуг**:\n/help\n\n';
       searchRequests.forEach((req, index) => {
         searchMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
@@ -777,7 +777,7 @@ bot.on('message', (msg) => {
   
     // Если есть заявки на предоставление услуг
     if (offerRequests.length > 0) {
-      let offerMessage = '💼 **Ваши заявки на предоставление услуг**:\n\n';
+      let offerMessage = '💼 **Ваши заявки на предоставление услуг**:\n/help\n\n';
       offerRequests.forEach((req, index) => {
         offerMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description}\n${req.contact}\n\n`;
       });
@@ -787,7 +787,7 @@ bot.on('message', (msg) => {
   
     // Если нет ни заявок на поиск, ни заявок на предоставление услуг
     if (searchRequests.length === 0 && offerRequests.length === 0) {
-      sendAndTrackListMessage(chatId, 'У вас нет активных заявок.');
+      sendAndTrackListMessage(chatId, 'У вас нет активных заявок.\n/help');
     }
 
     setTimeout(() => {
@@ -820,7 +820,7 @@ function handleSearchService(chatId, text, userState, userId) {
         userState.responses.country = englishCountryName;
 
         userState.step = 'search_2';
-        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город:`);
+        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
       } else {
         sendAndTrackMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
       }
@@ -830,7 +830,7 @@ function handleSearchService(chatId, text, userState, userId) {
 
       userState.responses.city = text;
       userState.step = 'search_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023):');
+      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
       break;
 
 
@@ -866,7 +866,7 @@ function handleSearchService(chatId, text, userState, userId) {
       } else {
         userState.responses.date = text;
         userState.step = 'search_4';
-        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30):');
+        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30). Если вы ищете услугу в любое время, то укажите (00.00-23.59).');
       }
     }
   }
@@ -920,7 +920,7 @@ function handleSearchService(chatId, text, userState, userId) {
       // Если время корректно, сохраняем его и переходим к следующему шагу
       userState.responses.time = text;
       userState.step = 'search_5';
-      sendAndTrackMessage(chatId, 'Укажите сумму (например, 5000):');
+      sendAndTrackMessage(chatId, 'Укажите сумму, которую вы готовы заплатить за услугу (например, 5000 рублей, 30 евро, 100 юаней):');
     } else {
       // Сообщение об ошибке формата
       sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
@@ -930,7 +930,7 @@ function handleSearchService(chatId, text, userState, userId) {
     case 'search_5':
       userState.responses.amount = text;
       userState.step = 'search_6';
-      sendAndTrackMessage(chatId, 'Timer:');
+      sendAndTrackMessage(chatId, 'Введите время, которая ваша заявка будет активна. От 1 до 24 часов. Введите только число:');
       break;
 
       case 'search_6':
@@ -949,7 +949,7 @@ function handleSearchService(chatId, text, userState, userId) {
     case 'search_7':
       userState.responses.description = text;
       userState.step = 'search_8';
-      sendAndTrackMessage(chatId, 'Contact:');
+      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
       break;
 
     case 'search_8':
@@ -964,7 +964,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Поиск завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
@@ -1018,7 +1018,7 @@ function handleSearchService(chatId, text, userState, userId) {
             
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
-                let offersMessage = '📋 *Релевантные предложения услуг*:\n\n';
+                let offersMessage = '📋 *Релевантные предложения услуг*:\n/help\n\n';
                 sortedOffers.forEach((req, index) => {
                   offersMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
                 });
@@ -1034,14 +1034,14 @@ function handleSearchService(chatId, text, userState, userId) {
 
                 if (cityMatches.length === 0) {
                   setTimeout(() => {
-                    bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+                    bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
                   }, 500);
                 } else {
                   // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
                   const alternativeOffers = cityMatches.filter((offer) => offer.descriptionSimilarity >= 0.3);
 
                   if (alternativeOffers.length > 0) {
-                    let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n\n';
+                    let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n';
                     alternativeOffers.slice(0, 5).forEach((req, index) => {
                       alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
                     });
@@ -1051,7 +1051,7 @@ function handleSearchService(chatId, text, userState, userId) {
                     }, 500); // Задержка в 1 секунду
                   } else {
                     setTimeout(() => {
-                      bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+                      bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
                     }, 500);
                   }
                 }
@@ -1061,7 +1061,7 @@ function handleSearchService(chatId, text, userState, userId) {
             } else {
               // Сообщение в случае отсутствия предложений по стране
               setTimeout(() => {
-                bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
+                bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
               }, 500);
             }
             deleteAllTrackedMessages(chatId);
@@ -1087,7 +1087,7 @@ function handleProvideService(chatId, text, userState, userId) {
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
         userState.step = 'provide_2';
-        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город:`);
+        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
       } else {
         sendAndTrackMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
       }
@@ -1097,7 +1097,7 @@ function handleProvideService(chatId, text, userState, userId) {
 
       userState.responses.city = text;
       userState.step = 'provide_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023):');
+      sendAndTrackMessage(chatId, 'Укажите дату, когда вы готовы оказать услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
       break;
 
 
@@ -1133,7 +1133,7 @@ function handleProvideService(chatId, text, userState, userId) {
       } else {
         userState.responses.date = text;
         userState.step = 'provide_4';
-        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30):');
+        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30). Если вы готовы оказать услугу в любое время, то укажите (00.00-23.59).');
       }
     }
   }
@@ -1161,7 +1161,7 @@ function handleProvideService(chatId, text, userState, userId) {
           // Если время корректно, сохраняем его и переходим к следующему шагу
           userState.responses.time = text;
           userState.step = 'provide_5';
-          sendAndTrackMessage(chatId, 'Укажите сумму (например, 5000):');
+          sendAndTrackMessage(chatId, 'Укажите сумму за которую вы готовы выполнить услугу (например, 5000 рублей, 30 евро, 100 юаней):');
         }
       } else {
         // Сообщение об ошибке формата
@@ -1173,7 +1173,7 @@ function handleProvideService(chatId, text, userState, userId) {
     case 'provide_5':
       userState.responses.amount = text;
       userState.step = 'provide_6';
-      sendAndTrackMessage(chatId, 'Timer:');
+      sendAndTrackMessage(chatId, 'Введите время, которая ваша заявка будет активна. От 1 до 24 часов. Введите только число:');
       break;
 
       case 'provide_6':
@@ -1186,14 +1186,14 @@ function handleProvideService(chatId, text, userState, userId) {
         // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
         userState.responses.timer = text;
         userState.step = 'provide_7';
-        sendAndTrackMessage(chatId, 'Опишите, какую услугу вы ищете:');
+        sendAndTrackMessage(chatId, 'Опишите, какую услугу вы предоставляете:');
         break;
       
 
     case 'provide_7':
       userState.responses.description = text;
       userState.step = 'provide_8';
-      sendAndTrackMessage(chatId, 'Contact:');
+      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
       break;
 
     case 'provide_8':
@@ -1208,7 +1208,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Заявка завершен!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
@@ -1261,7 +1261,7 @@ function handleProvideService(chatId, text, userState, userId) {
       
         // Отправляем релевантные предложения, если они есть
         if (sortedSearches.length > 0) {
-          let searchesMessage = '📋 *Релевантные предложения услуг*:\n\n';
+          let searchesMessage = '📋 *Релевантные объявления о поиске*:\n/help\n\n';
           sortedSearches.forEach((req, index) => {
             searchesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
           });
@@ -1277,14 +1277,14 @@ function handleProvideService(chatId, text, userState, userId) {
 
           if (cityMatches.length === 0) {
             setTimeout(() => {
-              bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.');
+              bot.sendMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
             }, 500);
           } else {
             // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
             const alternativeSearches = cityMatches.filter((search) => search.descriptionSimilarity >= 0.3);
 
             if (alternativeSearches.length > 0) {
-              let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n\n';
+              let alternativesMessage = 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n';
               alternativeSearches.slice(0, 5).forEach((req, index) => {
                 alternativesMessage += `${index + 1}. ${req.country}, ${req.city}, ${req.date}, ${req.time}, ${req.amount} - ${req.description} (Contact: ${req.contact})\n\n`;
               });
@@ -1294,7 +1294,7 @@ function handleProvideService(chatId, text, userState, userId) {
               }, 500); // Задержка в 1 секунду
             } else {
               setTimeout(() => {
-                bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.');
+                bot.sendMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
               }, 500);
             }
           }
@@ -1303,7 +1303,7 @@ function handleProvideService(chatId, text, userState, userId) {
       } else {
         // Сообщение в случае отсутствия предложений по стране
         setTimeout(() => {
-          bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.');
+          bot.sendMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
       }, 500);
       }
       deleteAllTrackedMessages(chatId);
