@@ -537,7 +537,9 @@ bot.onText(/\/start/, async (msg) => {
 
   if (states[chatId]) {
     delete states[chatId]; // Удаляем состояние пользователя из хранилища
-    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    setTimeout(() => {
+      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    }, 500); 
   }
   
   const username = msg.from.username || `${msg.from.first_name} ${msg.from.last_name}`;
@@ -570,7 +572,7 @@ bot.onText(/\/help/, (msg) => {
 
   if (states[chatId]) {
     delete states[chatId]; // Удаляем состояние пользователя из хранилища
-    setTimeout( () => {
+    setTimeout(() => {
       deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
     }, 500); 
   }
