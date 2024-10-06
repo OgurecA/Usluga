@@ -846,6 +846,16 @@ bot.on('callback_query', async (callbackQuery) => {
   const userId = callbackQuery.from.id;
   const data = callbackQuery.data;
 
+  if (states[chatId]) {
+    delete states[chatId]; // Удаляем состояние пользователя из хранилища
+    setTimeout(() => {
+      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    }, 500); 
+  }
+  setTimeout(() => {
+    deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+  }, 500); 
+
   // Если нажата кнопка "Удалить заявку на поиск"
   if (data === 'delete_search') {
     states[chatId] = { step: 'delete_search_request', requests: db.getSearchRequestsByUser(userId) };
@@ -880,6 +890,9 @@ bot.on('message', (msg) => {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
       delete states[chatId];
+      setTimeout(() => {
+        deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+      }, 5000); 
     }
 
     // Удаление заявки на предложение по индексу
@@ -894,6 +907,9 @@ bot.on('message', (msg) => {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
       }
       delete states[chatId];
+      setTimeout(() => {
+        deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+      }, 5000); 
     }
   }
 });
