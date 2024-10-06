@@ -850,21 +850,25 @@ bot.on('callback_query', async (callbackQuery) => {
     delete states[chatId]; // Удаляем состояние пользователя из хранилища
     setTimeout(() => {
       deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
-    }, 500); 
+    }, 200); 
   }
   setTimeout(() => {
     deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
-  }, 500); 
+  }, 200); 
 
   // Если нажата кнопка "Удалить заявку на поиск"
   if (data === 'delete_search') {
     states[chatId] = { step: 'delete_search_request', requests: db.getSearchRequestsByUser(userId) };
-    sendAndTrackMessage(chatId, 'Введите номер заявки на поиск, которую хотите удалить (например, 1, 2, 3).');
+    setTimeout(() => {
+      sendAndTrackMessage(chatId, 'Введите номер заявки на поиск, которую хотите удалить (например, 1, 2, 3).');
+    }, 500); 
   }
   // Если нажата кнопка "Удалить заявку предложения"
   else if (data === 'delete_offer') {
     states[chatId] = { step: 'delete_offer_request', requests: db.getOfferRequestsByUser(userId) };
-    sendAndTrackMessage(chatId, 'Введите номер заявки предложения, которую хотите удалить (например, 1, 2, 3).');
+    setTimeout(() => {
+      sendAndTrackMessage(chatId, 'Введите номер заявки предложения, которую хотите удалить (например, 1, 2, 3).');
+    }, 500); 
   }
 
 });
