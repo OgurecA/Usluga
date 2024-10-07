@@ -517,7 +517,10 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
+const offerStorage = {};
 
+// Функция для генерации уникального идентификатора
+const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
 
 
 // Регулярные выражения для валидации данных
@@ -901,29 +904,42 @@ bot.on('callback_query', async (callbackQuery) => {
 
 });
 
+// Обработчик callback_query для кнопки "Ответить"
 bot.on('callback_query', (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
+  const messageId = callbackQuery.message.message_id; // ID сообщения с кнопкой
   const data = callbackQuery.data;
-  const messageId = callbackQuery.message.message_id;
 
   // Проверяем, начинается ли callback_data с 'reply_'
   if (data.startsWith('reply_')) {
-    // Извлекаем и декодируем информацию о предложении из callback_data
-    const offerInfo = JSON.parse(data.replace('reply_', ''));
+    // Извлекаем уникальный идентификатор предложения
+    const offerId = data.split('_')[1];
 
-    // Формируем сообщение с контактной информацией и подробностями заявки
-    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
-                        `Описание услуги: ${offerInfo.description}\n` +
-                        `Контакт: ${offerInfo.contact}\n\n` +
-                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+    // Ищем предложение по идентификатору в хранилище
+    const offerInfo = offerStorage[offerId];
 
-    // Отправляем сообщение пользователю
-    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
-      // Удаляем сообщение с кнопкой после отправки контактной информации
-      bot.deleteMessage(chatId, messageId).catch((error) => {
-        console.error(`Ошибка при удалении сообщения: ${error.message}`);
+    if (offerInfo) {
+      // Формируем сообщение с контактной информацией и подробностями заявки
+      const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+                           `Страна: ${offerInfo.country}\n` +
+                           `Город: ${offerInfo.city}\n` +
+                           `Дата: ${offerInfo.date}\n` +
+                           `Время: ${offerInfo.time}\n` +
+                           `Сумма: ${offerInfo.amount}\n` +
+                           `Описание услуги: ${offerInfo.description}\n` +
+                           `Контакт: ${offerInfo.contact}\n\n` +
+                           `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+
+      // Отправляем сообщение пользователю с контактной информацией
+      bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
+        // Удаляем сообщение с кнопкой после отправки контактной информации
+        bot.deleteMessage(chatId, messageId).catch((error) => {
+          console.error(`Ошибка при удалении сообщения: ${error.message}`);
+        });
       });
-    });
+    } else {
+      bot.sendMessage(chatId, 'Ошибка: не удалось найти информацию о предложении.');
+    }
   }
 });
 
@@ -1183,33 +1199,31 @@ function handleSearchService(chatId, text, userState, userId) {
                 sortedOffers = relevantOffers.slice(0, 5);
               }
             
-              
+
               // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
                   let offerMessage = `📋 *Предложение*\n\n` +
-                                     `Страна: ${offer.country}\n` +
-                                     `Город: ${offer.city}\n` +
-                                     `Дата: ${offer.date}\n` +
-                                     `Время: ${offer.time}\n` +
-                                     `Сумма: ${offer.amount}\n` +
-                                     `Описание: ${offer.description}\n`;
-            
-                  // Кнопка "Ответить"
-                  const encodedOfferData = JSON.stringify({
-                    description: offer.description,
-                    contact: offer.contact
-                  });
+                                    `Страна: ${offer.country}\n` +
+                                    `Город: ${offer.city}\n` +
+                                    `Дата: ${offer.date}\n` +
+                                    `Время: ${offer.time}\n` +
+                                    `Сумма: ${offer.amount}\n` +
+                                    `Описание: ${offer.description}\n`;
+
+                  // Генерируем уникальный идентификатор для предложения и сохраняем его в хранилище
+                  const offerId = generateUniqueId();
+                  offerStorage[offerId] = offer;
 
                   const replyOptions = {
                     reply_markup: {
                       inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${encodedOfferData}` }],
+                        [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
                       ],
                     },
                     parse_mode: 'Markdown',
                   };
-            
+
                   // Отправляем каждое предложение отдельно с кнопкой
                   setTimeout(() => {
                     sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
