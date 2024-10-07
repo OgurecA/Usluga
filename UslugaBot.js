@@ -901,6 +901,32 @@ bot.on('callback_query', async (callbackQuery) => {
 
 });
 
+bot.on('callback_query', (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const data = callbackQuery.data;
+  const messageId = callbackQuery.message.message_id;
+
+  // Проверяем, начинается ли callback_data с 'reply_'
+  if (data.startsWith('reply_')) {
+    // Извлекаем и декодируем информацию о предложении из callback_data
+    const offerInfo = JSON.parse(data.replace('reply_', ''));
+
+    // Формируем сообщение с контактной информацией и подробностями заявки
+    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+                        `Описание услуги: ${offerInfo.description}\n` +
+                        `Контакт: ${offerInfo.contact}\n\n` +
+                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+
+    // Отправляем сообщение пользователю
+    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
+      // Удаляем сообщение с кнопкой после отправки контактной информации
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.error(`Ошибка при удалении сообщения: ${error.message}`);
+      });
+    });
+  }
+});
+
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
@@ -1170,9 +1196,15 @@ function handleSearchService(chatId, text, userState, userId) {
                                      `Описание: ${offer.description}\n`;
             
                   // Кнопка "Ответить"
-                  // Вместо передачи всей информации закодируем короткий уникальный идентификатор
-                  const encodedOfferData = `reply_${offer.id}`; // Используйте короткий уникальный ID или индекс
-
+                  const encodedOfferData = JSON.stringify({
+                    country: offer.country,
+                    city: offer.city,
+                    date: offer.date,
+                    time: offer.time,
+                    amount: offer.time,
+                    description: offer.description,
+                    contact: offer.contact
+                  });
 
                   const replyOptions = {
                     reply_markup: {
@@ -1188,41 +1220,6 @@ function handleSearchService(chatId, text, userState, userId) {
                     sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
                   }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
                 });
-
-                // Обработчик callback_query для кнопки "Ответить"
-                bot.on('callback_query', (callbackQuery) => {
-                  const chatId = callbackQuery.message.chat.id;
-                  const messageId = callbackQuery.message.message_id; // ID сообщения с кнопкой
-                  const data = callbackQuery.data;
-                
-                  // Проверяем, начинается ли callback_data с 'reply_'
-                  if (data.startsWith('reply_')) {
-                    // Извлекаем уникальный идентификатор предложения
-                    const offerId = data.split('_')[1];
-                
-                    // Используем offerId для поиска нужного предложения в массиве `sortedOffers`
-                    const offerInfo = sortedOffers.find((offer) => offer.id === offerId);
-                
-                    if (offerInfo) {
-                      // Формируем сообщение с контактной информацией и подробностями заявки
-                      const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
-                                           `Описание услуги: ${offerInfo.description}\n` +
-                                           `Контакт: ${offerInfo.contact}\n\n` +
-                                           `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-                
-                      // Отправляем сообщение пользователю с контактной информацией
-                      bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
-                        // Удаляем сообщение с кнопкой после отправки контактной информации
-                        bot.deleteMessage(chatId, messageId).catch((error) => {
-                          console.error(`Ошибка при удалении сообщения: ${error.message}`);
-                        });
-                      });
-                    } else {
-                      bot.sendMessage(chatId, 'Ошибка: не удалось найти информацию о предложении.');
-                    }
-                  }
-                });
-
                 
             
               } else {
