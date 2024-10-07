@@ -1,14 +1,16 @@
-const redis = require('redis');
+const { createClient } = require('redis');
 
-// Создаем подключение к Redis
-const redisClient = redis.createClient({
-  host: '127.0.0.1',
-  port: 6379,
-});
+// Создаем новый клиент Redis
+const redisClient = createClient();
 
-// Обработка ошибок подключения
 redisClient.on('error', (err) => {
   console.error('Ошибка подключения к Redis:', err);
 });
+
+// Подключаемся к Redis
+(async () => {
+  await redisClient.connect();
+  console.log('Успешное подключение к Redis');
+})();
 
 module.exports = redisClient;

@@ -1607,7 +1607,7 @@ function findClosestCountry(input) {
 
 function saveOfferToRedis(offerId, offerData, callback) {
   // Сохраняем данные в Redis с истечением срока через 3600 секунд (1 час)
-  redisClient.setex(offerId, 3600, JSON.stringify(offerData), (err, result) => {
+  redisClient.set(offerId, JSON.stringify(offerData), { EX: 3600 }, (err, result) => {
     if (err) {
       console.error('Ошибка сохранения данных в Redis:', err);
     } else {
@@ -1616,6 +1616,7 @@ function saveOfferToRedis(offerId, offerData, callback) {
     if (callback) callback(err, result);
   });
 }
+
 
 // Запуск бота
 console.log("Бот запущен и готов к работе...");
