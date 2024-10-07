@@ -1197,11 +1197,6 @@ function handleSearchService(chatId, text, userState, userId) {
             
                   // Кнопка "Ответить"
                   const encodedOfferData = JSON.stringify({
-                    country: offer.country,
-                    city: offer.city,
-                    date: offer.date,
-                    time: offer.time,
-                    amount: offer.time,
                     description: offer.description,
                     contact: offer.contact
                   });
