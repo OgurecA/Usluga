@@ -1218,24 +1218,28 @@ function handleSearchService(chatId, text, userState, userId) {
                                        `Описание: ${offer.description}\n`;
               
                   // Сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                  saveOfferToRedis(offerId, offer, (err, result) => {
-                    if (!err) {
-                      // Кнопка "Ответить" с сохранением offerId в callback_data
-                      const replyOptions = {
-                        reply_markup: {
-                          inline_keyboard: [
-                            [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                          ],
-                        },
-                        parse_mode: 'Markdown',
-                      };
+                  try {
+                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
+                    saveOfferToRedis(offerId, offer);
               
-                      // Отправляем сообщение с кнопкой
-                      setTimeout(() => {
-                        sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
-                      }, index * 100);
-                    }
-                  });
+                    // Кнопка "Ответить" с сохранением offerId в callback_data
+                    const replyOptions = {
+                      reply_markup: {
+                        inline_keyboard: [
+                          [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
+                        ],
+                      },
+                      parse_mode: 'Markdown',
+                    };
+              
+                    // Отправляем сообщение с кнопкой
+                    setTimeout(() => {
+                      sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
+                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
+              
+                  } catch (err) {
+                    console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
+                  }
                 });
               
             
