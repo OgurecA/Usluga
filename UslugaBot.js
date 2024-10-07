@@ -1203,7 +1203,7 @@ function handleSearchService(chatId, text, userState, userId) {
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
                   // Генерируем уникальный ключ для предложения
-                  const offerId = `offer:${offer.id}`; // Например, "offer:12345"
+                  const offerId = `offer:${generateRandomId()}`; // Например, "offer:12345"
                   const offerMessage = `📋 *Предложение*\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
@@ -1602,6 +1602,10 @@ function findClosestCountry(input) {
   });
 
   return highestScore > 0.7 ? bestMatch : null;
+}
+
+function generateRandomId() {
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Генерируем случайное 10-значное число
 }
 
 async function saveOfferToRedis(offerId, offerData) {
