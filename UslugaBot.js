@@ -2,6 +2,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const natural = require('natural');
 const db = require('./Database.js');
+const redisClient = require('./redisClient');
 const cities = require('all-the-cities');
 const moment = require('moment-timezone');
 
@@ -518,6 +519,7 @@ const countryToISO = {
 };
 
 const offerStorage = {};
+const searchStorage = {};
 
 // Функция для генерации уникального идентификатора
 const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
@@ -904,7 +906,6 @@ bot.on('callback_query', async (callbackQuery) => {
 
 });
 
-// Обработчик callback_query для кнопки "Ответить"
 bot.on('callback_query', (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id; // ID сообщения с кнопкой
@@ -912,36 +913,40 @@ bot.on('callback_query', (callbackQuery) => {
 
   // Проверяем, начинается ли callback_data с 'reply_'
   if (data.startsWith('reply_')) {
-    // Извлекаем уникальный идентификатор предложения
-    const offerId = data.split('_')[1];
+    const offerId = data.replace('reply_', ''); // Извлекаем offerId из callback_data
 
-    // Ищем предложение по идентификатору в хранилище
-    const offerInfo = offerStorage[offerId];
+    // Извлекаем данные предложения из Redis по offerId
+    redisClient.get(offerId, (err, result) => {
+      if (err) {
+        console.error('Ошибка получения данных из Redis:', err);
+        bot.sendMessage(chatId, 'Ошибка: не удалось получить данные о предложении.');
+      } else if (result) {
+        const offerInfo = JSON.parse(result); // Декодируем данные из Redis
 
-    if (offerInfo) {
-      // Формируем сообщение с контактной информацией и подробностями заявки
-      const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
-                           `Страна: ${offerInfo.country}\n` +
-                           `Город: ${offerInfo.city}\n` +
-                           `Дата: ${offerInfo.date}\n` +
-                           `Время: ${offerInfo.time}\n` +
-                           `Сумма: ${offerInfo.amount}\n` +
-                           `Описание услуги: ${offerInfo.description}\n` +
-                           `Контакт: ${offerInfo.contact}\n\n` +
-                           `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+        // Формируем сообщение с контактной информацией и подробностями заявки
+        const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+                             `Город: ${offerInfo.city}\n` +
+                             `Дата: ${offerInfo.date}\n` +
+                             `Время: ${offerInfo.time}\n` +
+                             `Сумма: ${offerInfo.amount}\n` +
+                             `Описание услуги: ${offerInfo.description}\n` +
+                             `Контакт: ${offerInfo.contact}\n\n` +
+                             `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
 
-      // Отправляем сообщение пользователю с контактной информацией
-      bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
-        // Удаляем сообщение с кнопкой после отправки контактной информации
-        bot.deleteMessage(chatId, messageId).catch((error) => {
-          console.error(`Ошибка при удалении сообщения: ${error.message}`);
+        // Отправляем сообщение пользователю с контактной информацией
+        bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
+          // Удаляем сообщение с кнопкой после отправки контактной информации
+          bot.deleteMessage(chatId, messageId).catch((error) => {
+            console.error(`Ошибка при удалении сообщения: ${error.message}`);
+          });
         });
-      });
-    } else {
-      bot.sendMessage(chatId, 'Ошибка: не удалось найти информацию о предложении.');
-    }
+      } else {
+        bot.sendMessage(chatId, 'Это предложение больше не доступно.');
+      }
+    });
   }
 });
+
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
@@ -1200,36 +1205,39 @@ function handleSearchService(chatId, text, userState, userId) {
               }
             
 
-              // Отправляем релевантные предложения, если они есть
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
-                  let offerMessage = `📋 *Предложение*\n\n` +
-                                    `Страна: ${offer.country}\n` +
-                                    `Город: ${offer.city}\n` +
-                                    `Дата: ${offer.date}\n` +
-                                    `Время: ${offer.time}\n` +
-                                    `Сумма: ${offer.amount}\n` +
-                                    `Описание: ${offer.description}\n`;
-
-                  // Генерируем уникальный идентификатор для предложения и сохраняем его в хранилище
-                  const offerId = generateUniqueId();
-                  offerStorage[offerId] = offer;
-
-                  const replyOptions = {
-                    reply_markup: {
-                      inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                      ],
-                    },
-                    parse_mode: 'Markdown',
-                  };
-
-                  // Отправляем каждое предложение отдельно с кнопкой
-                  setTimeout(() => {
-                    sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
-                  }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
+                  // Генерируем уникальный ключ для предложения
+                  const offerId = `offer:${offer.id}`; // Например, "offer:12345"
+                  const offerMessage = `📋 *Предложение*\n\n` +
+                                       `Страна: ${offer.country}\n` +
+                                       `Город: ${offer.city}\n` +
+                                       `Дата: ${offer.date}\n` +
+                                       `Время: ${offer.time}\n` +
+                                       `Сумма: ${offer.amount}\n` +
+                                       `Описание: ${offer.description}\n`;
+              
+                  // Сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
+                  saveOfferToRedis(offerId, offer, (err, result) => {
+                    if (!err) {
+                      // Кнопка "Ответить" с сохранением offerId в callback_data
+                      const replyOptions = {
+                        reply_markup: {
+                          inline_keyboard: [
+                            [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
+                          ],
+                        },
+                        parse_mode: 'Markdown',
+                      };
+              
+                      // Отправляем сообщение с кнопкой
+                      setTimeout(() => {
+                        sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
+                      }, index * 100);
+                    }
+                  });
                 });
-                
+              
             
               } else {
                 // Сообщение в случае отсутствия предложений
@@ -1595,6 +1603,18 @@ function findClosestCountry(input) {
   });
 
   return highestScore > 0.7 ? bestMatch : null;
+}
+
+function saveOfferToRedis(offerId, offerData, callback) {
+  // Сохраняем данные в Redis с истечением срока через 3600 секунд (1 час)
+  redisClient.setex(offerId, 3600, JSON.stringify(offerData), (err, result) => {
+    if (err) {
+      console.error('Ошибка сохранения данных в Redis:', err);
+    } else {
+      console.log(`Предложение ${offerId} успешно сохранено в Redis.`);
+    }
+    if (callback) callback(err, result);
+  });
 }
 
 // Запуск бота
