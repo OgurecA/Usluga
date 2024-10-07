@@ -518,12 +518,6 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
-const offerStorage = {};
-const searchStorage = {};
-
-// Функция для генерации уникального идентификатора
-const generateUniqueId = () => Math.random().toString(36).substr(2, 9);
-
 
 // Регулярные выражения для валидации данных
 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -906,7 +900,7 @@ bot.on('callback_query', async (callbackQuery) => {
 
 });
 
-bot.on('callback_query', (callbackQuery) => {
+bot.on('callback_query', async (callbackQuery) => {
   const chatId = callbackQuery.message.chat.id;
   const messageId = callbackQuery.message.message_id; // ID сообщения с кнопкой
   const data = callbackQuery.data;
@@ -915,12 +909,11 @@ bot.on('callback_query', (callbackQuery) => {
   if (data.startsWith('reply_')) {
     const offerId = data.replace('reply_', ''); // Извлекаем offerId из callback_data
 
-    // Извлекаем данные предложения из Redis по offerId
-    redisClient.get(offerId, (err, result) => {
-      if (err) {
-        console.error('Ошибка получения данных из Redis:', err);
-        bot.sendMessage(chatId, 'Ошибка: не удалось получить данные о предложении.');
-      } else if (result) {
+    try {
+      // Асинхронно получаем данные предложения из Redis по offerId
+      const result = await redisClient.get(offerId);
+
+      if (result) {
         const offerInfo = JSON.parse(result); // Декодируем данные из Redis
 
         // Формируем сообщение с контактной информацией и подробностями заявки
@@ -934,18 +927,20 @@ bot.on('callback_query', (callbackQuery) => {
                              `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
 
         // Отправляем сообщение пользователю с контактной информацией
-        bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' }).then(() => {
-          // Удаляем сообщение с кнопкой после отправки контактной информации
-          bot.deleteMessage(chatId, messageId).catch((error) => {
-            console.error(`Ошибка при удалении сообщения: ${error.message}`);
-          });
-        });
+        await bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
+
+        // Удаляем сообщение с кнопкой после отправки контактной информации
+        await bot.deleteMessage(chatId, messageId);
       } else {
-        bot.sendMessage(chatId, 'Это предложение больше не доступно.');
+        await bot.sendMessage(chatId, 'Это предложение больше не доступно.');
       }
-    });
+    } catch (err) {
+      console.error('Ошибка получения данных из Redis:', err);
+      await bot.sendMessage(chatId, 'Ошибка: не удалось получить данные о предложении.');
+    }
   }
 });
+
 
 
 bot.on('message', (msg) => {
@@ -1609,17 +1604,15 @@ function findClosestCountry(input) {
   return highestScore > 0.7 ? bestMatch : null;
 }
 
-function saveOfferToRedis(offerId, offerData, callback) {
-  // Сохраняем данные в Redis с истечением срока через 3600 секунд (1 час)
-  redisClient.set(offerId, JSON.stringify(offerData), { EX: 3600 }, (err, result) => {
-    if (err) {
-      console.error('Ошибка сохранения данных в Redis:', err);
-    } else {
-      console.log(`Предложение ${offerId} успешно сохранено в Redis.`);
-    }
-    if (callback) callback(err, result);
-  });
+async function saveOfferToRedis(offerId, offerData) {
+  try {
+    await redisClient.set(offerId, JSON.stringify(offerData), { EX: 3600 }); // EX: 3600 секунд (1 час)
+    console.log(`Предложение ${offerId} успешно сохранено в Redis.`);
+  } catch (err) {
+    console.error('Ошибка сохранения данных в Redis:', err);
+  }
 }
+
 
 
 // Запуск бота
