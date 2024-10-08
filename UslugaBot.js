@@ -514,7 +514,7 @@ const countryToISO = {
   'Ukraine': 'ua',
   'United Arab Emirates': 'ae',
   'United Kingdom': 'gb',
-  'United States': 'us',
+  'USA': 'us',
   'Uruguay': 'uy',
   'Uzbekistan': 'uz',
   'Vanuatu': 'vu',
