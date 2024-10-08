@@ -610,6 +610,66 @@ bot.onText(/\/help/, async (msg) => {
 
 
 
+
+const axios = require('axios');
+
+// Конфигурация Geonames
+const GEONAMES_USERNAME = 'acp044'; // Ваше имя пользователя Geonames
+const COUNTRY_CODE = 'RU'; // Код страны для проверки
+
+// Функция для проверки написания города
+async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
+  try {
+    // Отправляем запрос к Geonames API
+    const response = await axios.get('http://api.geonames.org/searchJSON', {
+      params: {
+        q: cityName,         // Название города для поиска
+        country: countryCode, // Код страны
+        maxRows: 5,          // Количество возвращаемых результатов
+        username: GEONAMES_USERNAME, // Ваше имя пользователя Geonames
+        featureClass: 'P',   // Только населенные пункты
+      },
+    });
+
+    // Проверяем, есть ли результаты
+    if (response.data.geonames && response.data.geonames.length > 0) {
+      // Фильтруем результаты и возвращаем имена городов
+      const matchingCities = response.data.geonames.map((city) => city.name);
+      console.log(`Совпадения для "${cityName}" в стране ${countryCode}:`, matchingCities);
+
+      // Пытаемся найти точное совпадение
+      const exactMatch = matchingCities.find(
+        (name) => name.toLowerCase() === cityName.toLowerCase()
+      );
+
+      if (exactMatch) {
+        console.log(`Город "${exactMatch}" найден.`);
+        return { isValid: true, matchedCity: exactMatch };
+      } else {
+        console.log(`Точное совпадение не найдено. Предлагаемые варианты: ${matchingCities.join(', ')}`);
+        return { isValid: false, suggestions: matchingCities };
+      }
+    } else {
+      console.log(`Город "${cityName}" не найден в стране ${countryCode}.`);
+      return { isValid: false, suggestions: [] };
+    }
+  } catch (error) {
+    console.error('Ошибка при запросе к Geonames API:', error);
+    return { isValid: false, suggestions: [] };
+  }
+}
+
+// Пример использования
+checkCityName('Питер').then((result) => {
+  if (result.isValid) {
+    console.log(`Город подтвержден: ${result.matchedCity}`);
+  } else {
+    console.log('Ошибка в написании города. Предложения:', result.suggestions);
+  }
+});
+
+
+
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 const startMessagesToDelete = {};
 const listMessagesToDelete = {};
