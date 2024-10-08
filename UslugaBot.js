@@ -615,6 +615,7 @@ const startMessagesToDelete = {};
 const listMessagesToDelete = {};
 const helpMessagesToDelete = {};
 const resultMessagesToDelete = {};
+const contactMessagesToDelete = {};
 
 function trackMessage(chatId, messageId, text) {
   // Игнорируем команды /start и /help
@@ -666,6 +667,40 @@ async function sendAndTrackResultMessage(chatId, message, options = {}) {
   return sentMsg;
 }
 
+async function sendAndTrackContactMessage(chatId, message, options = {}) {
+  try {
+    const sentMsg = await bot.sendMessage(chatId, message, options);
+    
+    // Добавляем сообщение в список сообщений для удаления
+    if (!contactMessagesToDelete[chatId]) {
+      contactMessagesToDelete[chatId] = [];
+    }
+    contactMessagesToDelete[chatId].push(sentMsg.message_id);
+
+    console.log(`Сообщение отправлено. ID: ${sentMsg.message_id}. Удаление запланировано через 6 часов.`);
+
+    // Запускаем таймер для удаления сообщения через 6 часов
+    setTimeout(() => {
+      // Удаление конкретного сообщения
+      bot.deleteMessage(chatId, sentMsg.message_id).then(() => {
+        console.log(`Сообщение с ID: ${sentMsg.message_id} успешно удалено через 6 часов.`);
+
+        // Удаляем ID сообщения из массива после успешного удаления
+        contactMessagesToDelete[chatId] = contactMessagesToDelete[chatId].filter(
+          (id) => id !== sentMsg.message_id
+        );
+      }).catch((error) => {
+        console.error(`Ошибка при удалении сообщения с ID: ${sentMsg.message_id}: ${error.message}`);
+      });
+    }, 10 * 1000);
+
+    return sentMsg;
+  } catch (error) {
+    console.error(`Ошибка при отправке сообщения: ${error.message}`);
+    return null;
+  }
+}
+
 async function sendAndTrackStartMessage(chatId, message, options) {
   try {
     const sentMsg = await bot.sendMessage(chatId, message, options);
@@ -709,6 +744,18 @@ function deleteAllTrackedResultMessages(chatId) {
     });
     // Очищаем список сообщений после удаления
     resultMessagesToDelete[chatId] = [];
+  }
+}
+
+function deleteAllTrackedContactMessages(chatId) {
+  if (contactMessagesToDelete[chatId]) {
+    contactMessagesToDelete[chatId].forEach((messageId) => {
+      bot.deleteMessage(chatId, messageId).catch((error) => {
+        console.log(`Ошибка при удалении сообщения: ${error}`);
+      });
+    });
+    // Очищаем список сообщений после удаления
+    contactMessagesToDelete[chatId] = [];
   }
 }
 
@@ -918,7 +965,8 @@ bot.on('callback_query', async (callbackQuery) => {
         const offerInfo = JSON.parse(result); // Декодируем данные из Redis
 
         // Формируем сообщение с контактной информацией и подробностями заявки
-        const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
+        const replyMessage = `📩 *Контактная информация и подробности*\n` +
+                             `Это сообщение удалится через 6 часов\n\n` +
                              `Город: ${offerInfo.city}\n` +
                              `Дата: ${offerInfo.date}\n` +
                              `Время: ${offerInfo.time}\n` +
@@ -928,16 +976,16 @@ bot.on('callback_query', async (callbackQuery) => {
                              `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
 
         // Отправляем сообщение пользователю с контактной информацией
-        await bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
+        await sendAndTrackContactMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
 
         // Удаляем сообщение с кнопкой после отправки контактной информации
         await bot.deleteMessage(chatId, messageId);
       } else {
-        await bot.sendMessage(chatId, 'Это предложение больше не доступно.');
+        await sendAndTrackMessage(chatId, 'Это предложение больше не доступно.');
       }
     } catch (err) {
       console.error('Ошибка получения данных из Redis:', err);
-      await bot.sendMessage(chatId, 'Ошибка: не удалось получить данные о предложении.');
+      await sendAndTrackMessage(chatId, 'Не удалось получить данные о предложении.');
     }
   }
 });
