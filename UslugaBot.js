@@ -668,7 +668,7 @@ async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
 }
 
 // Пример использования
-checkCityName('Таллинн').then((result) => {
+checkCityName('Питер').then((result) => {
   if (result.isValid) {
     console.log(`Город подтвержден: ${result.matchedCity}`);
   } else {
