@@ -198,7 +198,7 @@ const countries = [
   'Ukraine', 'Украина',
   'United Arab Emirates', 'UAE', 'Объединенные Арабские Эмираты', 'ОАЭ',
   'United Kingdom', 'UK', 'Великобритания',
-  'United States', 'USA', 'США', 'Америка',
+  'United States', 'USA', 'США', 'Америка', 'Пендосия',
   'Uruguay', 'Уругвай',
   'Uzbekistan', 'Узбекистан',
   'Vanuatu', 'Вануату',
@@ -213,6 +213,7 @@ const countries = [
 const countryMapping = {
   'Россия': 'Russia',
   'США': 'USA',
+  'Пендосия': 'USA',
   'Америка': 'USA',
   'United States': 'USA',
   'Китай': 'China',
@@ -1254,6 +1255,7 @@ function handleSearchService(chatId, text, userState, userId) {
                     sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
                 
                     alternativeOffers.forEach((offer, index) => {
+                      const offerId = `offer:${generateRandomId()}`;
                       let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
                                                `Страна: ${offer.country}\n` +
                                                `Город: ${offer.city}\n` +
@@ -1262,12 +1264,14 @@ function handleSearchService(chatId, text, userState, userId) {
                                                `Сумма: ${offer.amount}\n` +
                                                `Описание: ${offer.description}\n` +
                                                `Контакт: ${offer.contact}`;
-              
+                      try {
+                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
+                        saveOfferToRedis(offerId, offer);
                       // Кнопка "Ответить"
                       const alternativeOptions = {
                         reply_markup: {
                           inline_keyboard: [
-                            [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
+                            [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
                           ],
                         },
                         parse_mode: 'Markdown',
@@ -1277,7 +1281,12 @@ function handleSearchService(chatId, text, userState, userId) {
                       setTimeout(() => {
                         sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
                       }, index * 100); // Задержка перед отправкой каждого сообщения
+                      } catch (err) {
+                        console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
+                      }
                     });
+
+
                   } else {
                     setTimeout(() => {
                       sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
@@ -1489,6 +1498,7 @@ function handleProvideService(chatId, text, userState, userId) {
         }
       
           if (sortedSearches.length > 0) {
+            const offerId = `offer:${generateRandomId()}`;
             sortedSearches.forEach((offer, index) => {
               let searchMessage = `📋 *Заявки*\n\n` +
                                  `Страна: ${offer.country}\n` +
@@ -1500,19 +1510,28 @@ function handleProvideService(chatId, text, userState, userId) {
                                  `Контакт: ${offer.contact}`;
         
               // Кнопка "Ответить"
-              const replyOptions = {
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                  ],
-                },
-                parse_mode: 'Markdown',
-              };
-        
-              // Отправляем каждое предложение отдельно с кнопкой
-              setTimeout(() => {
-                sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
-              }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
+              try {
+                // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
+                saveOfferToRedis(offerId, offer);
+          
+                // Кнопка "Ответить" с сохранением offerId в callback_data
+                const replyOptions = {
+                  reply_markup: {
+                    inline_keyboard: [
+                      [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
+                    ],
+                  },
+                  parse_mode: 'Markdown',
+                };
+          
+                // Отправляем сообщение с кнопкой
+                setTimeout(() => {
+                  sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
+                }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
+          
+              } catch (err) {
+                console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
+              }
             });
       
         } else {
@@ -1531,6 +1550,7 @@ function handleProvideService(chatId, text, userState, userId) {
                 sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
 
                 alternativeSearches.forEach((offer, index) => {
+                  const offerId = `offer:${generateRandomId()}`;
                   let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
                                            `Страна: ${offer.country}\n` +
                                            `Город: ${offer.city}\n` +
@@ -1541,19 +1561,28 @@ function handleProvideService(chatId, text, userState, userId) {
                                            `Контакт: ${offer.contact}`;
           
                   // Кнопка "Ответить"
-                  const alternativeOptions = {
-                    reply_markup: {
-                      inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                      ],
-                    },
-                    parse_mode: 'Markdown',
-                  };
-          
-                  // Отправляем каждое альтернативное предложение отдельно с кнопкой
-                  setTimeout(() => {
-                    sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
-                  }, index * 100); // Задержка перед отправкой каждого сообщения
+                  try {
+                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
+                    saveOfferToRedis(offerId, offer);
+              
+                    // Кнопка "Ответить" с сохранением offerId в callback_data
+                    const alternativeOptions = {
+                      reply_markup: {
+                        inline_keyboard: [
+                          [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
+                        ],
+                      },
+                      parse_mode: 'Markdown',
+                    };
+              
+                    // Отправляем сообщение с кнопкой
+                    setTimeout(() => {
+                      sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
+                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
+              
+                  } catch (err) {
+                    console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
+                  }
                 });
             } else {
               setTimeout(() => {
