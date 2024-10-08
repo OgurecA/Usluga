@@ -623,7 +623,7 @@ const axios = require('axios');
 
 // Конфигурация Geonames
 const GEONAMES_USERNAME = 'acp044'; // Ваше имя пользователя Geonames
-const COUNTRY_CODE = 'RU'; // Код страны для проверки
+const COUNTRY_CODE = 'EE'; // Код страны для проверки
 
 // Функция для проверки написания города
 async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
@@ -668,7 +668,7 @@ async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
 }
 
 // Пример использования
-checkCityName('Моска').then((result) => {
+checkCityName('Талин').then((result) => {
   if (result.isValid) {
     console.log(`Город подтвержден: ${result.matchedCity}`);
   } else {
