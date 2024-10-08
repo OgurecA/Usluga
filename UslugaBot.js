@@ -1498,16 +1498,15 @@ function handleProvideService(chatId, text, userState, userId) {
         }
       
           if (sortedSearches.length > 0) {
-            const offerId = `offer:${generateRandomId()}`;
             sortedSearches.forEach((offer, index) => {
+              const offerId = `offer:${generateRandomId()}`;
               let searchMessage = `📋 *Заявки*\n\n` +
                                  `Страна: ${offer.country}\n` +
                                  `Город: ${offer.city}\n` +
                                  `Дата: ${offer.date}\n` +
                                  `Время: ${offer.time}\n` +
                                  `Сумма: ${offer.amount}\n` +
-                                 `Описание: ${offer.description}\n` +
-                                 `Контакт: ${offer.contact}`;
+                                 `Описание: ${offer.description}\n`;
         
               // Кнопка "Ответить"
               try {
@@ -1557,8 +1556,7 @@ function handleProvideService(chatId, text, userState, userId) {
                                            `Дата: ${offer.date}\n` +
                                            `Время: ${offer.time}\n` +
                                            `Сумма: ${offer.amount}\n` +
-                                           `Описание: ${offer.description}\n` +
-                                           `Контакт: ${offer.contact}`;
+                                           `Описание: ${offer.description}\n`;
           
                   // Кнопка "Ответить"
                   try {
