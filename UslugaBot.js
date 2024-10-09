@@ -1119,19 +1119,15 @@ function handleSearchService(chatId, text, userState, userId) {
       // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
       const [day, month, year] = userState.responses.date.split('/');
       const inputDate = new Date(`${year}-${month}-${day}`);
-      const today = new Date();
-  
-      const userTimezone = userState.responses.timezone || 'UTC';
-      const userCurrentTime = moment.tz(today, userTimezone);
+      const today = moment.tz(userState.responses.timezone || 'UTC');
+
       // Проверка на совпадение с сегодняшним днем
       if (
-        inputDate.getFullYear() === userCurrentTime.getFullYear() &&
-        inputDate.getMonth() === userCurrentTime.getMonth() &&
-        inputDate.getDate() === userCurrentTime.getDate()
+        inputDate.isSame(today, 'day')
       ) {
         // Получаем текущее время
-        const currentHour = userCurrentTime.getHours();
-        const currentMinute = today.getMinutes();
+        const currentHour = today.hours();
+        const currentMinute = today.minutes();
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
