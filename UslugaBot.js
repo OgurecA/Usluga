@@ -1121,7 +1121,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const userTimezone = userState.responses.timezone || 'UTC';
       console.log(userTimezone);
 
-      const inputDate = moment.tz(`${year}-${month}-${day}`, 'DD-MM-YYYY', userTimezone);
+      const inputDate = moment.tz(`${year}-${month}-${day}`, 'YYYY-MM-DD', userTimezone);
       console.log(inputDate);
 
       const today = moment.tz(userTimezone);
