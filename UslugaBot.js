@@ -5,6 +5,8 @@ const db = require('./Database.js');
 const redisClient = require('./redisClient');
 const cities = require('all-the-cities');
 const moment = require('moment-timezone');
+const axios = require('axios');
+
 
 // Настройка токена и создание экземпляра бота
 const token = '8083887592:AAGT_8XTHSgSPwbjc7hC8kRLner6v9ZJx2E';
@@ -619,14 +621,12 @@ bot.onText(/\/help/, async (msg) => {
 
 
 
-const axios = require('axios');
-
 // Конфигурация Geonames
 const GEONAMES_USERNAME = 'acp044'; // Ваше имя пользователя Geonames
 const COUNTRY_CODE = 'RU'; // Код страны для проверки
 
 // Функция для проверки написания города
-async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
+async function checkCityName(cityName, countryCode) {
   try {
     // Отправляем запрос к Geonames API
     const response = await axios.get('http://api.geonames.org/searchJSON', {
@@ -655,14 +655,7 @@ async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
   }
 }
 
-// Пример использования
-checkCityName('Питер').then((result) => {
-  if (result.isValid) {
-    console.log(`Город подтвержден: ${result.matchedCity}`);
-  } else {
-    console.log('Ошибка в написании города.');
-  }
-});
+
 
 
 
@@ -801,18 +794,6 @@ function deleteAllTrackedResultMessages(chatId) {
     });
     // Очищаем список сообщений после удаления
     resultMessagesToDelete[chatId] = [];
-  }
-}
-
-function deleteAllTrackedContactMessages(chatId) {
-  if (contactMessagesToDelete[chatId]) {
-    contactMessagesToDelete[chatId].forEach((messageId) => {
-      bot.deleteMessage(chatId, messageId).catch((error) => {
-        console.log(`Ошибка при удалении сообщения: ${error}`);
-      });
-    });
-    // Очищаем список сообщений после удаления
-    contactMessagesToDelete[chatId] = [];
   }
 }
 
@@ -1048,7 +1029,6 @@ bot.on('callback_query', async (callbackQuery) => {
 });
 
 
-
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
@@ -1108,6 +1088,10 @@ function handleSearchService(chatId, text, userState, userId) {
         const englishCountryName = countryMapping[bestMatchCountry] || bestMatchCountry;
         userState.responses.country = englishCountryName;
 
+        const countryISOCode = countryToISO[englishCountryName];
+        console.log(countryISOCode);
+        userState.responses.countryISO = countryISOCode;
+
         userState.step = 'search_2';
         sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
       } else {
@@ -1117,9 +1101,24 @@ function handleSearchService(chatId, text, userState, userId) {
     
       case 'search_2':
 
-      userState.responses.city = text;
-      userState.step = 'search_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
+      const countryCode = userState.responses.countryISO; // Получаем код страны из состояния пользователя
+      const cityName = text;
+
+      checkCityName(cityName, countryCode).then((result) => {
+        if (result.isValid) {
+          // Город подтвержден, сохраняем его
+          userState.responses.city = result.matchedCity;
+          userState.step = 'search_3';
+          sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+        } else {
+          // Город не подтвержден, предлагаем варианты
+          const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
+          sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+        }
+      }).catch((error) => {
+        console.error('Ошибка при проверке города:', error);
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке города. Попробуйте снова.');
+      });
       break;
 
 
@@ -1429,6 +1428,7 @@ function handleProvideService(chatId, text, userState, userId) {
 
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
+
         userState.step = 'provide_2';
         sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
       } else {
