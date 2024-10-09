@@ -584,17 +584,19 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 
 // Пример использования
 const offers = [
-  { id: 1, startTime: '16.00', endTime: '16.00', description: 'Репетитор' },
-  { id: 2, startTime: '16.00', endTime: '16.00', description: 'Учитель' },
-  { id: 3, startTime: '16.00', endTime: '16.00', description: 'Уважаю' },
-  { id: 4, startTime: '16.00', endTime: '16.00', description: 'Притираю обувь' },
-  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Выгуляю собаку, посижу с ребенком, выгружу навоз, поезжу с бабушкой, решу задачи, репетитор, сделаю все, короче' },
-  { id: 6, startTime: '16.00', endTime: '16.00', description: 'Выгулять собаку' },
+  { id: 1, startTime: '16.00', endTime: '16.00', description: 'обучение на дому' },
+  { id: 2, startTime: '16.00', endTime: '16.00', description: 'Выгул собаки' },
+  { id: 3, startTime: '16.00', endTime: '16.00', description: 'Нянька' },
+  { id: 4, startTime: '16.00', endTime: '16.00', description: 'Ремонт по дому' },
+  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Мойка автомобиля' },
+  { id: 6, startTime: '16.00', endTime: '16.00', description: 'услуга доставки товара из европы' },
+  { id: 7, startTime: '16.00', endTime: '16.00', description: 'трезвый водитель' },
+
 ];
 
 const userStartTime = '16.00';
 const userEndTime = '20.00';
-const userDescription = 'репетитор';
+const userDescription = 'Обучение';
 
 // Сортировка по времени и описанию
 const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
