@@ -588,13 +588,13 @@ const offers = [
   { id: 2, startTime: '16.00', endTime: '16.00', description: 'Учитель' },
   { id: 3, startTime: '16.00', endTime: '16.00', description: 'Уважаю' },
   { id: 4, startTime: '16.00', endTime: '16.00', description: 'Притираю обувь' },
-  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Выгуляю собаку, посижу с ребенком, выгружу навоз, поезжу с бабушкой, решу задачи, учитель, сделаю все, короче' },
+  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Выгуляю собаку, посижу с ребенком, выгружу навоз, поезжу с бабушкой, решу задачи, репетитор, сделаю все, короче' },
   { id: 6, startTime: '16.00', endTime: '16.00', description: 'Выгулять собаку' },
 ];
 
 const userStartTime = '16.00';
 const userEndTime = '20.00';
-const userDescription = 'Ищу репетитора';
+const userDescription = 'репетитор';
 
 // Сортировка по времени и описанию
 const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
