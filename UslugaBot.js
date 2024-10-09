@@ -1119,6 +1119,7 @@ function handleSearchService(chatId, text, userState, userId) {
       // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
       const [day, month, year] = userState.responses.date.split('/');
       const userTimezone = userState.responses.timezone || 'UTC';
+      console.log(userTimezone);
 
       const inputDate = moment.tz(`${year}-${month}-${day}`, 'DD-MM-YYYY', userTimezone);
 
