@@ -4,6 +4,7 @@ const natural = require('natural');
 const db = require('./Database.js');
 const axios = require('axios');
 const moment = require('moment-timezone');
+const stringSimilarity = require('string-similarity');
 
 
 // Настройка токена и создание экземпляра бота
@@ -527,8 +528,6 @@ const countryToISO = {
 };
 
 
-const stringSimilarity = require('string-similarity'); // Не забудьте установить библиотеку: npm install string-similarity
-
 function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription) {
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
@@ -585,19 +584,17 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 
 // Пример использования
 const offers = [
-  { id: 1, startTime: '12.00', endTime: '16.00', description: 'Уборка офиса и помещений' },
-  { id: 2, startTime: '13.00', endTime: '15.00', description: 'Мытье окон и уборка' },
-  { id: 3, startTime: '14.00', endTime: '18.00', description: 'Уважаю' },
-  { id: 4, startTime: '12.00', endTime: '13.00', description: 'Уборка небольших помещений' },
-  { id: 5, startTime: '16.00', endTime: '20.00', description: 'Уборка после ремонта' },
-  { id: 6, startTime: '12.00', endTime: '16.00', description: 'Выгулять собаку' },
-  { id: 7, startTime: '12.00', endTime: '16.00', description: 'Мытье окон и уборка' },
-  { id: 8, startTime: '22.00', endTime: '22.00', description: 'Генеральная уборка офиса' },
+  { id: 1, startTime: '16.00', endTime: '16.00', description: 'Репетитор' },
+  { id: 2, startTime: '16.00', endTime: '16.00', description: 'Учитель' },
+  { id: 3, startTime: '16.00', endTime: '16.00', description: 'Уважаю' },
+  { id: 4, startTime: '16.00', endTime: '16.00', description: 'Притираю обувь' },
+  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Выгуляю собаку, посижу с ребенком, выгружу навоз, поезжу с бабушкой, решу задачи, учитель, сделаю все, короче' },
+  { id: 6, startTime: '16.00', endTime: '16.00', description: 'Выгулять собаку' },
 ];
 
-const userStartTime = '17.00';
+const userStartTime = '16.00';
 const userEndTime = '20.00';
-const userDescription = 'Генеральная уборка офиса';
+const userDescription = 'Ищу репетитора';
 
 // Сортировка по времени и описанию
 const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
