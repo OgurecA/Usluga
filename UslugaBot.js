@@ -1122,8 +1122,10 @@ function handleSearchService(chatId, text, userState, userId) {
       console.log(userTimezone);
 
       const inputDate = moment.tz(`${year}-${month}-${day}`, 'DD-MM-YYYY', userTimezone);
+      console.log(inputDate);
 
       const today = moment.tz(userTimezone);
+      console.log(today);
 
       if (!inputDate.isValid() || !today.isValid()) {
         console.error('Некорректное преобразование даты в объект moment:', { inputDate, today });
@@ -1136,6 +1138,8 @@ function handleSearchService(chatId, text, userState, userId) {
         // Получаем текущее время
         const currentHour = today.hours();
         const currentMinute = today.minutes();
+        console.log(currentHour);
+        console.log(currentMinute);
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
