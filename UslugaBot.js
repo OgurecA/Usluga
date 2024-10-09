@@ -2,9 +2,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const natural = require('natural');
 const db = require('./Database.js');
-const redisClient = require('./redisClient');
-const cities = require('all-the-cities');
-const moment = require('moment-timezone');
 const axios = require('axios');
 
 
@@ -622,29 +619,47 @@ bot.onText(/\/help/, async (msg) => {
 
 
 // Конфигурация Geonames
-const GEONAMES_USERNAME = 'acp044'; // Ваше имя пользователя Geonames
-const COUNTRY_CODE = 'RU'; // Код страны для проверки
+const GEONAMES_USERNAME = 'acp044';
 
 // Функция для проверки написания города
 async function checkCityName(cityName, countryCode) {
   try {
-    // Отправляем запрос к Geonames API
+    // Отправляем запрос к Geonames API для поиска города
     const response = await axios.get('http://api.geonames.org/searchJSON', {
       params: {
         q: cityName,            // Название города для поиска
-        country: countryCode,   // Код страны
+        country: countryCode,   // Код страны (например, "RU")
         maxRows: 1,             // Возвращаем только один результат
-        username: GEONAMES_USERNAME, // Ваше имя пользователя Geonames
+        username: GEONAMES_USERNAME, // Имя пользователя Geonames
         featureClass: 'P',      // Только населенные пункты
         lang: 'ru'              // Язык ответа — русский
       },
     });
 
-    // Проверяем, есть ли результаты
+    // Проверяем, есть ли результаты поиска
     if (response.data.geonames && response.data.geonames.length > 0) {
-      const matchedCity = response.data.geonames[0].name; // Берем первый найденный город
-      console.log(`Город "${cityName}" найден как "${matchedCity}".`);
-      return { isValid: true, matchedCity };
+      const matchedCity = response.data.geonames[0].name;  // Название найденного города
+      const { lat, lng } = response.data.geonames[0];     // Координаты города
+
+      console.log(`Город "${cityName}" найден как "${matchedCity}". Извлекаем временную зону...`);
+
+      // Отправляем запрос на получение временной зоны по координатам города
+      const timezoneResponse = await axios.get('http://api.geonames.org/timezoneJSON', {
+        params: {
+          lat: lat,                // Широта города
+          lng: lng,                // Долгота города
+          username: GEONAMES_USERNAME // Имя пользователя Geonames
+        },
+      });
+
+      if (timezoneResponse.data && timezoneResponse.data.timezoneId) {
+        const timezone = timezoneResponse.data.timezoneId;
+        console.log(`Временная зона для города "${matchedCity}": ${timezone}.`);
+        return { isValid: true, matchedCity, timezone };
+      } else {
+        console.log(`Временная зона для города "${matchedCity}" не найдена.`);
+        return { isValid: true, matchedCity, timezone: null };
+      }
     } else {
       console.log(`Город "${cityName}" не найден в стране ${countryCode}.`);
       return { isValid: false, suggestions: [] };
@@ -657,15 +672,11 @@ async function checkCityName(cityName, countryCode) {
 
 
 
-
-
-
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 const startMessagesToDelete = {};
 const listMessagesToDelete = {};
 const helpMessagesToDelete = {};
 const resultMessagesToDelete = {};
-const contactMessagesToDelete = {};
 
 function trackMessage(chatId, messageId, text) {
   // Игнорируем команды /start и /help
@@ -715,40 +726,6 @@ async function sendAndTrackResultMessage(chatId, message, options = {}) {
   }
   resultMessagesToDelete[chatId].push(sentMsg.message_id);
   return sentMsg;
-}
-
-async function sendAndTrackContactMessage(chatId, message, options = {}) {
-  try {
-    const sentMsg = await bot.sendMessage(chatId, message, options);
-    
-    // Добавляем сообщение в список сообщений для удаления
-    if (!contactMessagesToDelete[chatId]) {
-      contactMessagesToDelete[chatId] = [];
-    }
-    contactMessagesToDelete[chatId].push(sentMsg.message_id);
-
-    console.log(`Сообщение отправлено. ID: ${sentMsg.message_id}. Удаление запланировано через 6 часов.`);
-
-    // Запускаем таймер для удаления сообщения через 6 часов
-    setTimeout(() => {
-      // Удаление конкретного сообщения
-      bot.deleteMessage(chatId, sentMsg.message_id).then(() => {
-        console.log(`Сообщение с ID: ${sentMsg.message_id} успешно удалено через 6 часов.`);
-
-        // Удаляем ID сообщения из массива после успешного удаления
-        contactMessagesToDelete[chatId] = contactMessagesToDelete[chatId].filter(
-          (id) => id !== sentMsg.message_id
-        );
-      }).catch((error) => {
-        console.error(`Ошибка при удалении сообщения с ID: ${sentMsg.message_id}: ${error.message}`);
-      });
-    }, 10 * 1000);
-
-    return sentMsg;
-  } catch (error) {
-    console.error(`Ошибка при отправке сообщения: ${error.message}`);
-    return null;
-  }
 }
 
 async function sendAndTrackStartMessage(chatId, message, options) {
@@ -984,48 +961,6 @@ bot.on('callback_query', async (callbackQuery) => {
     }, 500); 
   }
 
-});
-
-bot.on('callback_query', async (callbackQuery) => {
-  const chatId = callbackQuery.message.chat.id;
-  const messageId = callbackQuery.message.message_id; // ID сообщения с кнопкой
-  const data = callbackQuery.data;
-
-  // Проверяем, начинается ли callback_data с 'reply_'
-  if (data.startsWith('reply_')) {
-    const offerId = data.replace('reply_', ''); // Извлекаем offerId из callback_data
-
-    try {
-      // Асинхронно получаем данные предложения из Redis по offerId
-      const result = await redisClient.get(offerId);
-
-      if (result) {
-        const offerInfo = JSON.parse(result); // Декодируем данные из Redis
-
-        // Формируем сообщение с контактной информацией и подробностями заявки
-        const replyMessage = `📩 *Контактная информация и подробности*\n` +
-                             `Это сообщение удалится через 6 часов\n\n` +
-                             `Город: ${offerInfo.city}\n` +
-                             `Дата: ${offerInfo.date}\n` +
-                             `Время: ${offerInfo.time}\n` +
-                             `Сумма: ${offerInfo.amount}\n` +
-                             `Описание услуги: ${offerInfo.description}\n` +
-                             `Контакт: ${offerInfo.contact}\n\n` +
-                             `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-
-        // Отправляем сообщение пользователю с контактной информацией
-        await sendAndTrackContactMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
-
-        // Удаляем сообщение с кнопкой после отправки контактной информации
-        await bot.deleteMessage(chatId, messageId);
-      } else {
-        await sendAndTrackMessage(chatId, 'Это предложение больше не доступно.');
-      }
-    } catch (err) {
-      console.error('Ошибка получения данных из Redis:', err);
-      await sendAndTrackMessage(chatId, 'Не удалось получить данные о предложении.');
-    }
-  }
 });
 
 
@@ -1596,32 +1531,15 @@ function handleProvideService(chatId, text, userState, userId) {
                                  `Дата: ${offer.date}\n` +
                                  `Время: ${offer.time}\n` +
                                  `Сумма: ${offer.amount}\n` +
-                                 `Описание: ${offer.description}\n`;
+                                 `Описание: ${offer.description}\n` +
+                                 `Контакт: ${offer.contact}` +
+                                 `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
         
-              // Кнопка "Ответить"
-              try {
-                // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                saveOfferToRedis(offerId, offer);
-          
-                // Кнопка "Ответить" с сохранением offerId в callback_data
-                const replyOptions = {
-                  reply_markup: {
-                    inline_keyboard: [
-                      [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                    ],
-                  },
-                  parse_mode: 'Markdown',
-                };
-          
                 // Отправляем сообщение с кнопкой
                 setTimeout(() => {
                   sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
                 }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
-          
-              } catch (err) {
-                console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
-              }
-            });
+              });
       
         } else {
           // Сообщение в случае отсутствия предложений
@@ -1646,32 +1564,18 @@ function handleProvideService(chatId, text, userState, userId) {
                                            `Дата: ${offer.date}\n` +
                                            `Время: ${offer.time}\n` +
                                            `Сумма: ${offer.amount}\n` +
-                                           `Описание: ${offer.description}\n`;
+                                           `Описание: ${offer.description}\n` +
+                                           `Контакт: ${offer.contact}` +
+                                           `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
           
-                  // Кнопка "Ответить"
-                  try {
-                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                    saveOfferToRedis(offerId, offer);
-              
-                    // Кнопка "Ответить" с сохранением offerId в callback_data
-                    const alternativeOptions = {
-                      reply_markup: {
-                        inline_keyboard: [
-                          [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                        ],
-                      },
-                      parse_mode: 'Markdown',
-                    };
+
               
                     // Отправляем сообщение с кнопкой
                     setTimeout(() => {
                       sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
                     }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
-              
-                  } catch (err) {
-                    console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
-                  }
                 });
+
             } else {
               setTimeout(() => {
                 sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
@@ -1724,17 +1628,6 @@ function findClosestCountry(input) {
 function generateRandomId() {
   return Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Генерируем случайное 10-значное число
 }
-
-async function saveOfferToRedis(offerId, offerData) {
-  try {
-    await redisClient.set(offerId, JSON.stringify(offerData), { EX: 3600 }); // EX: 3600 секунд (1 час)
-    console.log(`Предложение ${offerId} успешно сохранено в Redis.`);
-  } catch (err) {
-    console.error('Ошибка сохранения данных в Redis:', err);
-  }
-}
-
-
 
 // Запуск бота
 console.log("Бот запущен и готов к работе...");
