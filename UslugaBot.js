@@ -1428,6 +1428,7 @@ function handleProvideService(chatId, text, userState, userId) {
 
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
+        userState.responses.countryISO = countryISOCode;
 
         userState.step = 'provide_2';
         sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
@@ -1438,9 +1439,24 @@ function handleProvideService(chatId, text, userState, userId) {
     
       case 'provide_2':
 
-      userState.responses.city = text;
-      userState.step = 'provide_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вы готовы оказать услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
+      const countryCode = userState.responses.countryISO; // Получаем код страны из состояния пользователя
+      const cityName = text;
+
+      checkCityName(cityName, countryCode).then((result) => {
+        if (result.isValid) {
+          // Город подтвержден, сохраняем его
+          userState.responses.city = result.matchedCity;
+          userState.step = 'provide_3';
+          sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вы оказываете услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+        } else {
+          // Город не подтвержден, предлагаем варианты
+          const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
+          sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+        }
+      }).catch((error) => {
+        console.error('Ошибка при проверке города:', error);
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке города. Попробуйте снова.');
+      });
       break;
 
 
