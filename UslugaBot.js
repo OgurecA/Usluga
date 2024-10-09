@@ -587,9 +587,12 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 const offers = [
   { id: 1, startTime: '12.00', endTime: '16.00', description: 'Уборка офиса и помещений' },
   { id: 2, startTime: '13.00', endTime: '15.00', description: 'Мытье окон и уборка' },
-  { id: 3, startTime: '14.00', endTime: '18.00', description: 'Генеральная уборка квартир' },
+  { id: 3, startTime: '14.00', endTime: '18.00', description: 'Уважаю' },
   { id: 4, startTime: '12.00', endTime: '13.00', description: 'Уборка небольших помещений' },
-  { id: 5, startTime: '16.00', endTime: '20.00', description: 'Уборка после ремонта' }
+  { id: 5, startTime: '16.00', endTime: '20.00', description: 'Уборка после ремонта' },
+  { id: 6, startTime: '12.00', endTime: '16.00', description: 'Выгулять собаку' },
+  { id: 7, startTime: '12.00', endTime: '16.00', description: 'Мытье окон и уборка' },
+  { id: 8, startTime: '22.00', endTime: '22.00', description: 'Генеральная уборка офиса' },
 ];
 
 const userStartTime = '12.00';
