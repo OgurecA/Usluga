@@ -1315,32 +1315,15 @@ function handleSearchService(chatId, text, userState, userId) {
                                        `Дата: ${offer.date}\n` +
                                        `Время: ${offer.time}\n` +
                                        `Сумма: ${offer.amount}\n` +
-                                       `Описание: ${offer.description}\n`;
-              
-                  // Сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                  try {
-                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                    saveOfferToRedis(offerId, offer);
-              
-                    // Кнопка "Ответить" с сохранением offerId в callback_data
-                    const replyOptions = {
-                      reply_markup: {
-                        inline_keyboard: [
-                          [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                        ],
-                      },
-                      parse_mode: 'Markdown',
-                    };
+                                       `Описание: ${offer.description}\n` +
+                                       `Контакт: ${offerInfo.contact}\n\n` +
+                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
               
                     // Отправляем сообщение с кнопкой
                     setTimeout(() => {
-                      sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
+                      sendAndTrackResultMessage(chatId, offerMessage);
                     }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
-              
-                  } catch (err) {
-                    console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
-                  }
-                });
+                  });
               
             
               } else {
@@ -1367,27 +1350,13 @@ function handleSearchService(chatId, text, userState, userId) {
                                                `Время: ${offer.time}\n` +
                                                `Сумма: ${offer.amount}\n` +
                                                `Описание: ${offer.description}\n` +
-                                               `Контакт: ${offer.contact}`;
-                      try {
-                    // Асинхронно сохраняем предложение в Redis с уникальным ключом и сроком жизни 1 час
-                        saveOfferToRedis(offerId, offer);
-                      // Кнопка "Ответить"
-                      const alternativeOptions = {
-                        reply_markup: {
-                          inline_keyboard: [
-                            [{ text: 'Ответить', callback_data: `reply_${offerId}` }],
-                          ],
-                        },
-                        parse_mode: 'Markdown',
-                      };
+                                               `Контакт: ${offer.contact}` +
+                                               `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
               
                       // Отправляем каждое альтернативное предложение отдельно с кнопкой
                       setTimeout(() => {
-                        sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
-                      }, index * 100); // Задержка перед отправкой каждого сообщения
-                      } catch (err) {
-                        console.error(`Ошибка сохранения предложения ${offerId} в Redis:`, err);
-                      }
+                        sendAndTrackResultMessage(chatId, alternativeMessage);
+                      }, index * 100);
                     });
 
 
