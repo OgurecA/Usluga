@@ -631,32 +631,20 @@ async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
     // Отправляем запрос к Geonames API
     const response = await axios.get('http://api.geonames.org/searchJSON', {
       params: {
-        q: cityName,         // Название города для поиска
-        country: countryCode, // Код страны
-        maxRows: 5,          // Количество возвращаемых результатов
+        q: cityName,            // Название города для поиска
+        country: countryCode,   // Код страны
+        maxRows: 1,             // Возвращаем только один результат
         username: GEONAMES_USERNAME, // Ваше имя пользователя Geonames
-        featureClass: 'P',   // Только населенные пункты
+        featureClass: 'P',      // Только населенные пункты
+        lang: 'ru'              // Язык ответа — русский
       },
     });
 
     // Проверяем, есть ли результаты
     if (response.data.geonames && response.data.geonames.length > 0) {
-      // Фильтруем результаты и возвращаем имена городов
-      const matchingCities = response.data.geonames.map((city) => city.name);
-      console.log(`Совпадения для "${cityName}" в стране ${countryCode}:`, matchingCities);
-
-      // Пытаемся найти точное совпадение
-      const exactMatch = matchingCities.find(
-        (name) => name.toLowerCase() === cityName.toLowerCase()
-      );
-
-      if (exactMatch) {
-        console.log(`Город "${exactMatch}" найден.`);
-        return { isValid: true, matchedCity: exactMatch };
-      } else {
-        console.log(`Точное совпадение не найдено. Предлагаемые варианты: ${matchingCities.join(', ')}`);
-        return { isValid: false, suggestions: matchingCities };
-      }
+      const matchedCity = response.data.geonames[0].name; // Берем первый найденный город
+      console.log(`Город "${cityName}" найден как "${matchedCity}".`);
+      return { isValid: true, matchedCity };
     } else {
       console.log(`Город "${cityName}" не найден в стране ${countryCode}.`);
       return { isValid: false, suggestions: [] };
@@ -668,13 +656,14 @@ async function checkCityName(cityName, countryCode = COUNTRY_CODE) {
 }
 
 // Пример использования
-checkCityName('Владивасток').then((result) => {
+checkCityName('Питер').then((result) => {
   if (result.isValid) {
     console.log(`Город подтвержден: ${result.matchedCity}`);
   } else {
-    console.log('Ошибка в написании города. Предложения:', result.suggestions);
+    console.log('Ошибка в написании города.');
   }
 });
+
 
 
 
