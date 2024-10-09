@@ -3,6 +3,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const natural = require('natural');
 const db = require('./Database.js');
 const axios = require('axios');
+const moment = require('moment-timezone'); 
 
 
 // Настройка токена и создание экземпляра бота
@@ -1043,6 +1044,7 @@ function handleSearchService(chatId, text, userState, userId) {
         if (result.isValid) {
           // Город подтвержден, сохраняем его
           userState.responses.city = result.matchedCity;
+          userState.responses.timezone = result.timezone;
           userState.step = 'search_3';
           sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
         } else {
@@ -1119,14 +1121,16 @@ function handleSearchService(chatId, text, userState, userId) {
       const inputDate = new Date(`${year}-${month}-${day}`);
       const today = new Date();
   
+      const userTimezone = userState.responses.timezone || 'UTC';
+      const userCurrentTime = moment.tz(today, userTimezone);
       // Проверка на совпадение с сегодняшним днем
       if (
-        inputDate.getFullYear() === today.getFullYear() &&
-        inputDate.getMonth() === today.getMonth() &&
-        inputDate.getDate() === today.getDate()
+        inputDate.getFullYear() === userCurrentTime.getFullYear() &&
+        inputDate.getMonth() === userCurrentTime.getMonth() &&
+        inputDate.getDate() === userCurrentTime.getDate()
       ) {
         // Получаем текущее время
-        const currentHour = today.getHours();
+        const currentHour = userCurrentTime.getHours();
         const currentMinute = today.getMinutes();
   
         // Проверка: начальное время должно быть строго больше текущего времени
@@ -1350,6 +1354,7 @@ function handleProvideService(chatId, text, userState, userId) {
         if (result.isValid) {
           // Город подтвержден, сохраняем его
           userState.responses.city = result.matchedCity;
+          userState.responses.timezone = result.timezone;
           userState.step = 'provide_3';
           sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вы оказываете услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
         } else {
