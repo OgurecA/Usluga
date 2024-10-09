@@ -527,7 +527,9 @@ const countryToISO = {
 };
 
 
-function sortOffersByTime(offers, userStartTime, userEndTime) {
+const stringSimilarity = require('string-similarity'); // Не забудьте установить библиотеку: npm install string-similarity
+
+function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription) {
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
     const [hours, minutes] = time.split('.').map(Number);
@@ -553,8 +555,14 @@ function sortOffersByTime(offers, userStartTime, userEndTime) {
     return 4;
   };
 
+  // Функция для расчета сходства описания с пользовательским описанием
+  const getDescriptionSimilarity = (offerDescription, userDescription) => {
+    return stringSimilarity.compareTwoStrings(offerDescription.toLowerCase(), userDescription.toLowerCase());
+  };
+
   // Сортировка предложений по категории времени
   return offers.sort((a, b) => {
+    // Преобразуем время в минуты
     const offerStartA = toMinutes(a.startTime);
     const offerEndA = toMinutes(a.endTime);
     const offerStartB = toMinutes(b.startTime);
@@ -567,27 +575,29 @@ function sortOffersByTime(offers, userStartTime, userEndTime) {
     // Сравниваем по категории совпадения
     if (categoryA !== categoryB) return categoryA - categoryB;
 
-    // Внутри одной категории сортируем по времени начала
-    return offerStartA - offerStartB;
+    // Внутри одной категории сортируем по степени сходства описания
+    const similarityA = getDescriptionSimilarity(a.description, userDescription);
+    const similarityB = getDescriptionSimilarity(b.description, userDescription);
+
+    return similarityB - similarityA; // Чем больше схожесть, тем выше позиция
   });
 }
 
 // Пример использования
 const offers = [
-  { id: 1, startTime: '12.00', endTime: '16.00' },
-  { id: 2, startTime: '13.00', endTime: '15.00' },
-  { id: 3, startTime: '14.00', endTime: '18.00' },
-  { id: 4, startTime: '12.00', endTime: '16.00' },
-  { id: 6, startTime: '10.00', endTime: '13.00' },
-  { id: 7, startTime: '10.00', endTime: '20.00' },
-  { id: 8, startTime: '15.00', endTime: '21.00' },
-  { id: 9, startTime: '16.00', endTime: '20.00' },
-  { id: 10, startTime: '17.00', endTime: '20.00' },
-
-
+  { id: 1, startTime: '12.00', endTime: '16.00', description: 'Уборка офиса и помещений' },
+  { id: 2, startTime: '13.00', endTime: '15.00', description: 'Мытье окон и уборка' },
+  { id: 3, startTime: '14.00', endTime: '18.00', description: 'Генеральная уборка квартир' },
+  { id: 4, startTime: '12.00', endTime: '13.00', description: 'Уборка небольших помещений' },
+  { id: 5, startTime: '16.00', endTime: '20.00', description: 'Уборка после ремонта' }
 ];
 
-const sortedOffers = sortOffersByTime(offers, '12.00', '16.00');
+const userStartTime = '12.00';
+const userEndTime = '16.00';
+const userDescription = 'Генеральная уборка офиса';
+
+// Сортировка по времени и описанию
+const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
 console.log('Отсортированные предложения:', sortedOffers);
 
 
@@ -1275,7 +1285,7 @@ function handleSearchService(chatId, text, userState, userId) {
               // Проверка для режимов сортировки и фильтрации
               const ignoreDescription = userState.responses.description === "-";
             
-              let sortedOffers;
+              const sortedOffers = sortOffersByTime(offers, '12.00', '16.00');
             
               // Если оба поля — "-", выбираем 10 случайных предложений
               if (ignoreCity && ignoreDescription) {
