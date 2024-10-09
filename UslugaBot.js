@@ -595,8 +595,8 @@ const offers = [
   { id: 8, startTime: '22.00', endTime: '22.00', description: 'Генеральная уборка офиса' },
 ];
 
-const userStartTime = '12.00';
-const userEndTime = '16.00';
+const userStartTime = '17.00';
+const userEndTime = '20.00';
 const userDescription = 'Генеральная уборка офиса';
 
 // Сортировка по времени и описанию
