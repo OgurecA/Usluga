@@ -582,6 +582,8 @@ const offers = [
   { id: 7, startTime: '10.00', endTime: '20.00' },
   { id: 8, startTime: '15.00', endTime: '21.00' },
   { id: 9, startTime: '16.00', endTime: '20.00' },
+  { id: 10, startTime: '17.00', endTime: '20.00' },
+
 
 ];
 
