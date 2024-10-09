@@ -3,7 +3,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const natural = require('natural');
 const db = require('./Database.js');
 const axios = require('axios');
-const moment = require('moment-timezone'); 
+const moment = require('moment-timezone');
 
 
 // Настройка токена и создание экземпляра бота
@@ -527,6 +527,68 @@ const countryToISO = {
 };
 
 
+function sortOffersByTime(offers, userStartTime, userEndTime) {
+  // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
+  const toMinutes = (time) => {
+    const [hours, minutes] = time.split('.').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Временные метки пользователя
+  const userStart = toMinutes(userStartTime);
+  const userEnd = toMinutes(userEndTime);
+
+  // Функция для определения категории совпадения времени
+  const getTimeCategory = (offerStart, offerEnd) => {
+    // Полное совпадение
+    if (offerStart === userStart && offerEnd === userEnd) return 1;
+
+    // Одно время внутри другого
+    if ((offerStart >= userStart && offerEnd <= userEnd) || (userStart >= offerStart && userEnd <= offerEnd)) return 2;
+
+    // Частичное совпадение
+    if ((offerStart < userEnd && offerEnd > userStart) || (userStart < offerEnd && userEnd > offerStart)) return 3;
+
+    // Нет совпадения
+    return 4;
+  };
+
+  // Сортировка предложений по категории времени
+  return offers.sort((a, b) => {
+    const offerStartA = toMinutes(a.startTime);
+    const offerEndA = toMinutes(a.endTime);
+    const offerStartB = toMinutes(b.startTime);
+    const offerEndB = toMinutes(b.endTime);
+
+    // Определяем категории для каждого предложения
+    const categoryA = getTimeCategory(offerStartA, offerEndA);
+    const categoryB = getTimeCategory(offerStartB, offerEndB);
+
+    // Сравниваем по категории совпадения
+    if (categoryA !== categoryB) return categoryA - categoryB;
+
+    // Внутри одной категории сортируем по времени начала
+    return offerStartA - offerStartB;
+  });
+}
+
+// Пример использования
+const offers = [
+  { id: 1, startTime: '12.00', endTime: '16.00' },
+  { id: 2, startTime: '13.00', endTime: '15.00' },
+  { id: 3, startTime: '14.00', endTime: '18.00' },
+  { id: 4, startTime: '12.00', endTime: '16.00' },
+  { id: 6, startTime: '10.00', endTime: '13.00' },
+  { id: 7, startTime: '10.00', endTime: '20.00' },
+  { id: 8, startTime: '15.00', endTime: '21.00' },
+  { id: 9, startTime: '16.00', endTime: '20.00' },
+
+];
+
+const sortedOffers = sortOffersByTime(offers, '12.00', '16.00');
+console.log('Отсортированные предложения:', sortedOffers);
+
+
 
 // Регулярные выражения для валидации данных
 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -1023,6 +1085,7 @@ function handleSearchService(chatId, text, userState, userId) {
       if (bestMatchCountry) {
         const englishCountryName = countryMapping[bestMatchCountry] || bestMatchCountry;
         userState.responses.country = englishCountryName;
+        userState.responses.answercountry = bestMatchCountry;
 
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
@@ -1119,7 +1182,6 @@ function handleSearchService(chatId, text, userState, userId) {
       // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
       const [day, month, year] = userState.responses.date.split('/');
       const userTimezone = userState.responses.timezone || 'UTC';
-      console.log(userTimezone);
 
       const inputDate = moment.tz(`${year}-${month}-${day}`, 'YYYY-MM-DD', userTimezone);
       console.log(inputDate);
@@ -1138,14 +1200,12 @@ function handleSearchService(chatId, text, userState, userId) {
         // Получаем текущее время
         const currentHour = today.hours();
         const currentMinute = today.minutes();
-        console.log(currentHour);
-        console.log(currentMinute);
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
           sendAndTrackMessage(
             chatId,
-            `Начальное время услуги не может быть меньше или равно текущему времени (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы ищите услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
           );
           break;
         }
@@ -1207,11 +1267,10 @@ function handleSearchService(chatId, text, userState, userId) {
       sendAndTrackResultMessage(chatId, searchSummary);
 
             // Получение всех предложений из таблицы `offer`
-            const offerRequests = db.getOffersByCountry(userState.responses.country);
+            const offerRequests = db.getOffersByCity(userState.responses.country, userState.responses.city);
 
             if (offerRequests.length > 0) {
               // Проверка для режимов сортировки и фильтрации
-              const ignoreCity = userState.responses.city === "-";
               const ignoreDescription = userState.responses.description === "-";
             
               let sortedOffers;
@@ -1255,7 +1314,6 @@ function handleSearchService(chatId, text, userState, userId) {
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
                   // Генерируем уникальный ключ для предложения
-                  const offerId = `offer:${generateRandomId()}`; // Например, "offer:12345"
                   const offerMessage = `📋 *Предложение*\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
@@ -1341,6 +1399,7 @@ function handleProvideService(chatId, text, userState, userId) {
       if (bestMatchCountry) {
         const englishCountryName = countryMapping[bestMatchCountry] || bestMatchCountry;
         userState.responses.country = englishCountryName;
+        userState.responses.answercountry = bestMatchCountry;
 
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
@@ -1422,23 +1481,55 @@ function handleProvideService(chatId, text, userState, userId) {
         // Проверка, что время реально: часы от 0 до 23, минуты от 0 до 59
         const [, startHour, startMinute, endHour, endMinute] = text.match(timeRegex);
 
-        // Проверяем, что время реально: часы от 0 до 23, минуты от 0 до 59
-        const isRealTime = (hour, minute) => hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
-    
         const startH = parseInt(startHour, 10);
         const startM = parseInt(startMinute, 10);
         const endH = parseInt(endHour, 10);
         const endM = parseInt(endMinute, 10);
     
         // Проверяем реальность времени начала и конца
-        if (!isRealTime(startH, startM) || !isRealTime(endH, endM)) {
-          sendAndTrackMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
-        } else {
+        // Проверка: часы и минуты должны быть в корректных диапазонах
+      if (startH < 0 || startH > 23 || startM < 0 || startM > 59 || endH < 0 || endH > 23 || endM < 0 || endM > 59) {
+        sendAndTrackMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
+        break;
+      }
+  
+      // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
+      const [day, month, year] = userState.responses.date.split('/');
+      const userTimezone = userState.responses.timezone || 'UTC';
+
+      const inputDate = moment.tz(`${year}-${month}-${day}`, 'YYYY-MM-DD', userTimezone);
+      console.log(inputDate);
+
+      const today = moment.tz(userTimezone);
+      console.log(today);
+
+      if (!inputDate.isValid() || !today.isValid()) {
+        console.error('Некорректное преобразование даты в объект moment:', { inputDate, today });
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке даты. Попробуйте снова.');
+        break;
+      }
+
+      // Проверка на совпадение с сегодняшним днем
+      if (inputDate.isSame(today, 'day')) {
+        // Получаем текущее время
+        const currentHour = today.hours();
+        const currentMinute = today.minutes();
+  
+        // Проверка: начальное время должно быть строго больше текущего времени
+        if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
+          sendAndTrackMessage(
+            chatId,
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы оказываете услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+          );
+          break;
+        }
+      }
+
           // Если время корректно, сохраняем его и переходим к следующему шагу
           userState.responses.time = text;
           userState.step = 'provide_5';
           sendAndTrackMessage(chatId, 'Укажите сумму за которую вы готовы выполнить услугу (например, 5000 рублей, 30 евро, 100 юаней):');
-        }
+
       } else {
         // Сообщение об ошибке формата
         sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
