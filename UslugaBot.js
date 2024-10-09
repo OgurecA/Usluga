@@ -1118,13 +1118,20 @@ function handleSearchService(chatId, text, userState, userId) {
   
       // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
       const [day, month, year] = userState.responses.date.split('/');
-      const inputDate = new Date(`${year}-${month}-${day}`);
-      const today = moment.tz(userState.responses.timezone || 'UTC');
+      const userTimezone = userState.responses.timezone || 'UTC';
+
+      const inputDate = moment.tz(`${year}-${month}-${day}`, 'DD-MM-YYYY', userTimezone);
+
+      const today = moment.tz(userTimezone);
+
+      if (!inputDate.isValid() || !today.isValid()) {
+        console.error('Некорректное преобразование даты в объект moment:', { inputDate, today });
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке даты. Попробуйте снова.');
+        break;
+      }
 
       // Проверка на совпадение с сегодняшним днем
-      if (
-        inputDate.isSame(today, 'day')
-      ) {
+      if (inputDate.isSame(today, 'day')) {
         // Получаем текущее время
         const currentHour = today.hours();
         const currentMinute = today.minutes();
