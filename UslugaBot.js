@@ -1310,7 +1310,7 @@ function handleSearchService(chatId, text, userState, userId) {
 
               console.log(timeRange);
 
-              const str = 'The quick brown fox jumps over the lazy dog.';
+              const str = userState.responses.description;
 
               const words = str.split(' ');
               console.log(words[3]);
