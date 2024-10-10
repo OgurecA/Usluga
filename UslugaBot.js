@@ -1284,10 +1284,14 @@ function handleSearchService(chatId, text, userState, userId) {
           
             if (offerRequests.length > 0) {
 
-              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+              const timeRange = userState.responses.time.trim(); // Предполагаем, что время выглядит как "14.00-16.00"
+              const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
+              if (match) {
+                const [startTime, endTime] = [match[1], match[2]];
               
-              // Разделяем строку на две части
-              const [startTime, endTime] = userState.responses.time.split('-');
+                console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
+              }
+              
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
