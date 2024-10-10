@@ -527,8 +527,9 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
+function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
+  const moment = require('moment'); // Подключение moment.js для работы с датами
 
-function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription) {
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
     const [hours, minutes] = time.split('.').map(Number);
@@ -539,19 +540,15 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   const userStart = toMinutes(userStartTime);
   const userEnd = toMinutes(userEndTime);
 
+  // Преобразуем дату пользователя в объект Moment
+  const userMomentDate = moment(userDate, 'DD/MM/YYYY');
+
   // Функция для определения категории совпадения времени
   const getTimeCategory = (offerStart, offerEnd) => {
-    // Полное совпадение
-    if (offerStart === userStart && offerEnd === userEnd) return 1;
-
-    // Одно время внутри другого
-    if ((offerStart >= userStart && offerEnd <= userEnd) || (userStart >= offerStart && userEnd <= offerEnd)) return 2;
-
-    // Частичное совпадение
-    if ((offerStart < userEnd && offerEnd > userStart) || (userStart < offerEnd && userEnd > offerStart)) return 3;
-
-    // Нет совпадения
-    return 4;
+    if (offerStart === userStart && offerEnd === userEnd) return 1; // Полное совпадение
+    if ((offerStart >= userStart && offerEnd <= userEnd) || (userStart >= offerStart && userEnd <= offerEnd)) return 2; // Вложенное время
+    if ((offerStart < userEnd && offerEnd > userStart) || (userStart < offerEnd && userEnd > offerStart)) return 3; // Частичное совпадение
+    return 4; // Нет совпадения
   };
 
   // Функция для расчета сходства описания с пользовательским описанием
@@ -559,22 +556,34 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
     return stringSimilarity.compareTwoStrings(offerDescription.toLowerCase(), userDescription.toLowerCase());
   };
 
-  // Сортировка предложений по категории времени
+  // Функция для расчета разницы в датах (в днях)
+  const getDateDifference = (offerDate) => {
+    const offerMomentDate = moment(offerDate, 'DD/MM/YYYY'); // Преобразуем дату предложения в объект Moment
+    return Math.abs(userMomentDate.diff(offerMomentDate, 'days')); // Возвращаем абсолютное значение разницы в днях
+  };
+
+  // Сортировка предложений по категории даты, времени и описанию
   return offers.sort((a, b) => {
-    // Преобразуем время в минуты
+    // Сравнение по дате
+    const dateDiffA = getDateDifference(a.date); // Разница даты предложения "a" с пользователем
+    const dateDiffB = getDateDifference(b.date); // Разница даты предложения "b" с пользователем
+
+    if (dateDiffA !== dateDiffB) return dateDiffA - dateDiffB; // Чем меньше разница, тем выше позиция
+
+    // Преобразуем время в минуты для сравнения
     const offerStartA = toMinutes(a.startTime);
     const offerEndA = toMinutes(a.endTime);
     const offerStartB = toMinutes(b.startTime);
     const offerEndB = toMinutes(b.endTime);
 
-    // Определяем категории для каждого предложения
+    // Определяем категории совпадения времени
     const categoryA = getTimeCategory(offerStartA, offerEndA);
     const categoryB = getTimeCategory(offerStartB, offerEndB);
 
-    // Сравниваем по категории совпадения
+    // Сравниваем по категории совпадения времени
     if (categoryA !== categoryB) return categoryA - categoryB;
 
-    // Внутри одной категории сортируем по степени сходства описания
+    // Внутри одной категории времени сортируем по степени схожести описания
     const similarityA = getDescriptionSimilarity(a.description, userDescription);
     const similarityB = getDescriptionSimilarity(b.description, userDescription);
 
@@ -582,18 +591,21 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   });
 }
 
-// Пример использования
-const offers = [
-  { id: 1, startTime: '16.00', endTime: '16.00', description: 'обучение на дому' },
-  { id: 2, startTime: '16.00', endTime: '16.00', description: 'Выгул собаки' },
-  { id: 3, startTime: '16.00', endTime: '16.00', description: 'Нянька' },
-  { id: 4, startTime: '16.00', endTime: '16.00', description: 'Ремонт по дому' },
-  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Мойка автомобиля' },
-  { id: 6, startTime: '16.00', endTime: '16.00', description: 'услуга доставки товара из европы' },
-  { id: 7, startTime: '16.00', endTime: '16.00', description: 'трезвый' },
+const sortedOffers = sortOffersByTimeAndDescription(offerRequests, '14.00', '16.00', 'Техническое обслуживание', '15/10/2024');
+const offerRequests = [
+  { id: 1, date: '15/10/2024', startTime: '14.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
+  { id: 2, date: '14/10/2024', startTime: '13.00', endTime: '17.00', description: 'Настройка ПО и обслуживание' },
+  { id: 3, date: '15/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
+  { id: 4, date: '16/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
+  { id: 5, date: '14/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 6, date: '15/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 7, date: '16/10/2024', startTime: '14.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 8, date: '17/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 9, date: '17/10/2024', startTime: '12.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
+
 
 ];
-
+console.log(sortedOffers);
 
 
 
@@ -1284,7 +1296,7 @@ function handleSearchService(chatId, text, userState, userId) {
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
 
-              const userDescription = userState.responses.description;
+              const userDescription = userState.responses.description
               
               const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription);            
             
