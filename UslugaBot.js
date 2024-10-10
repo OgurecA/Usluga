@@ -530,6 +530,9 @@ const countryToISO = {
 
 function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
   const moment = require('moment'); // Подключение moment.js для работы с датами
+  console.log('Start of sortOffersByTimeAndDescription');
+  console.log(`Входные данные для sortOffersByTimeAndDescription: startTime=${userStartTime}, endTime=${userEndTime}`);
+
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
@@ -1304,18 +1307,13 @@ function handleSearchService(chatId, text, userState, userId) {
 
               const timeRange = userState.responses.time;
 
-              if (typeof timeRange !== 'string') {
+              if (typeof timeRange == 'string') {
                 console.error(`Проблема с форматом времени: ожидается строка, но получено ${typeof timeRange}. Значение: ${timeRange}`);
                 throw new Error(`Ошибка формата времени: ожидается строка, но получено ${typeof timeRange}`);
               }
               
               console.log(`Проверка значения: timeRange = ${timeRange}`);
               
-              // Убедимся, что строка имеет корректный формат
-              if (!timeRange.includes('-')) {
-                console.error(`Некорректный формат времени: ${timeRange}. Ожидается формат "HH.MM-HH.MM".`);
-                throw new Error(`Некорректный формат времени: ${timeRange}. Ожидается формат "HH.MM-HH.MM".`);
-              }
 
               const [startTime, endTime] = timeRange.split('-');
               console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
