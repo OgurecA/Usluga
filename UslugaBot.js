@@ -538,7 +538,14 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
-    const [hours, minutes] = time.split('.').map(Number);
+    console.log(`Преобразование времени: входное значение = ${time}`);
+    if (!time) {
+      console.error(`Ошибка: передано некорректное значение времени. Значение: ${time}`);
+      throw new Error(`Некорректное значение времени: ${time}`);
+    }
+  
+    const [hours, minutes] = time.split('.').map(Number); // Ошибка возникает на этой строке
+    console.log(`Преобразовано в: hours=${hours}, minutes=${minutes}`);
     return hours * 60 + minutes;
   };
 
