@@ -584,10 +584,7 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
     if (dateDiffA !== dateDiffB) return dateDiffA - dateDiffB; // Чем меньше разница, тем выше позиция
 
     // Преобразуем время в минуты для сравнения
-    const offerStartA = toMinutes(a.startTime);
-    const offerEndA = toMinutes(a.endTime);
-    const offerStartB = toMinutes(b.startTime);
-    const offerEndB = toMinutes(b.endTime);
+
 
     // Определяем категории совпадения времени
     const categoryA = getTimeCategory(offerStartA, offerEndA);
