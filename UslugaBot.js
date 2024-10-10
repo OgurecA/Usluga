@@ -1285,6 +1285,14 @@ function handleSearchService(chatId, text, userState, userId) {
             if (offerRequests.length > 0) {
 
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+              
+              if (!timeRange || typeof timeRange !== 'string' || !timeRange.includes('-')) {
+                sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
+                break;
+              }
+              
+              console.log('Time range:', timeRange);
+
 
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
@@ -1534,32 +1542,20 @@ function handleProvideService(chatId, text, userState, userId) {
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
-
-      console.log('Stop1');
+      
       
       sendAndTrackResultMessage(chatId, searchSummary);
-
-      console.log('Stop2');
 
             const isAnyCity = userState.responses.city === "Любой город";
             const searchRequests = isAnyCity 
               ? db.getSearchesByCountry(userState.responses.country) 
               : db.getSearchesByCity(userState.responses.country, userState.responses.city);
-
-              console.log('Stop3');
           
             if (searchRequests.length > 0) {
 
-              console.log('Stop4');
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
-              if (!timeRange || typeof timeRange !== 'string' || !timeRange.includes('-')) {
-                sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
-                break;
-              }
               
-              console.log('Time range:', timeRange);
-
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
 
