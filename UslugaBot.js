@@ -591,7 +591,6 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   });
 }
 
-const sortedOffers = sortOffersByTimeAndDescription(offerRequests, '14.00', '16.00', 'Техническое обслуживание', '15/10/2024');
 const offerRequests = [
   { id: 1, date: '15/10/2024', startTime: '14.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
   { id: 2, date: '14/10/2024', startTime: '13.00', endTime: '17.00', description: 'Настройка ПО и обслуживание' },
@@ -605,6 +604,9 @@ const offerRequests = [
 
 
 ];
+
+const sortedOffers = sortOffersByTimeAndDescription(offerRequests, '14.00', '16.00', 'Техническое обслуживание', '15/10/2024');
+
 console.log(sortedOffers);
 
 
