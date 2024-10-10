@@ -532,16 +532,7 @@ function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescript
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
-    // Проверка значения на undefined или пустую строку
 
-    // Добавляем логирование перед split, чтобы видеть входящее значение
-    console.log(`Преобразование времени: входное значение = ${time}`);
-
-    // Проверяем, содержит ли строка ожидаемый формат
-    if (!time.includes('.')) {
-      console.error(`Ошибка: ожидаемый формат времени (HH.MM), но получено: ${time}`);
-      return 0;
-    }
 
     // Пробуем разделить строку на часы и минуты
     try {
@@ -1306,7 +1297,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
@@ -1575,7 +1566,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
