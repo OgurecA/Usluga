@@ -1115,14 +1115,15 @@ function handleSearchService(chatId, text, userState, userId) {
           `Город подтвержден как "Любой город". Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`
         );
       } else {
-
         checkCityName(cityName, countryCode).then((result) => {
           if (result.isValid) {
-            // Город подтвержден, сохраняем его
+            userState.responses.city = result.matchedCity;
+            userState.responses.timezone = result.timezone;
+            userState.step = 'search_3';
+            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
           } else {
             // Город не подтвержден, предлагаем варианты
-            const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
-            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Попробуйте снова.`);
           }
         }).catch((error) => {
           console.error('Ошибка при проверке города:', error);
