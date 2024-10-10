@@ -331,7 +331,8 @@ const countryMapping = {
   'Сирия': 'Syria',
   'Йемен': 'Yemen',
   'Афганистан': 'Afghanistan',
-  'Турция': 'Turkey'
+  'Турция': 'Turkey',
+  'Парагвай': 'Paraguay'
 };
 
 const countryToISO = {
