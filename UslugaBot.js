@@ -1301,8 +1301,23 @@ function handleSearchService(chatId, text, userState, userId) {
           
             if (offerRequests.length > 0) {
 
+              if (!userState.responses.time) {
+                console.log('Ошибка: Значение времени отсутствует в состоянии пользователя!');
+                sendAndTrackMessage(chatId, 'Ошибка: значение времени не указано. Пожалуйста, укажите время в формате "14.00-16.00".');
+                return;
+              }
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
+              console.log(timeRange);
+
+              const str = 'The quick brown fox jumps over the lazy dog.';
+
+              const words = str.split(' ');
+              console.log(words[3]);
+              // Expected output: "fox"
+
+              const chars = str.split('');
+              console.log(chars[8]);
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
 
