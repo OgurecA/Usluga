@@ -109,6 +109,11 @@ module.exports = {
     return query.all(country);
   },
 
+  getSearchesByCountry: (country) => {
+    const query = db.prepare("SELECT * FROM search WHERE country = ?");
+    return query.all(country);
+  },
+
   getOffersByCity: (country, city) => {
     const query = db.prepare("SELECT * FROM offer WHERE country = ? AND city = ?");
     return query.all(country, city);
