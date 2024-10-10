@@ -115,12 +115,12 @@ module.exports = {
   },
 
   getOffersByCity: (country, city) => {
-    const query = db.prepare("SELECT * FROM offer WHERE country = ? AND city = ?");
+    const query = db.prepare("SELECT * FROM offer WHERE country = ? AND (city = ? OR city = 'Любой город')");
     return query.all(country, city);
   },
   
   getSearchesByCity: (country, city) => {
-    const query = db.prepare("SELECT * FROM search WHERE country = ? AND city = ?");
+    const query = db.prepare("SELECT * FROM search WHERE country = ? AND (city = ? OR city = 'Любой город')");
     return query.all(country, city);
   },
   
