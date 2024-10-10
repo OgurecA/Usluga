@@ -1286,12 +1286,23 @@ function handleSearchService(chatId, text, userState, userId) {
 
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
               
-              if (!timeRange || typeof timeRange !== 'string' || !timeRange.includes('-')) {
-                sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
-                break;
-              }
-              
-              console.log('Time range:', timeRange);
+              console.log('Проверка времени:', timeRange);
+
+  // Проверка на наличие и корректность формата времени
+  if (!timeRange || typeof timeRange !== 'string') {
+    console.error(`Ошибка: timeRange имеет некорректное значение: ${timeRange}`);
+    sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
+    break;
+  }
+
+  // Логирование перед split, чтобы убедиться, что `-` присутствует
+  if (!timeRange.includes('-')) {
+    console.error(`Ошибка: timeRange не содержит символа '-': ${timeRange}`);
+    sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
+    break;
+  }
+
+  console.log('Time range перед split:', timeRange);
 
 
               // Разделяем строку на две части
