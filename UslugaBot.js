@@ -533,6 +533,8 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   console.log('Start of sortOffersByTimeAndDescription');
   console.log(`Входные данные для sortOffersByTimeAndDescription: startTime=${userStartTime}, endTime=${userEndTime}`);
 
+  const startTime = String(userStartTime);
+  const endTime = String(userEndTime);
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
@@ -541,8 +543,8 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   };
 
   // Временные метки пользователя
-  const userStart = toMinutes(userStartTime);
-  const userEnd = toMinutes(userEndTime);
+  const userStart = toMinutes(startTime);
+  const userEnd = toMinutes(endTime);
 
   // Преобразуем дату пользователя в объект Moment
   const userMomentDate = moment(userDate, 'DD/MM/YYYY');
