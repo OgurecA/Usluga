@@ -1337,6 +1337,7 @@ function handleSearchService(chatId, text, userState, userId) {
               const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription, userDate); 
               
               const limitedOffers = sortedOffers.slice(0, 20);
+              console.log(limitedOffers);
             
               if (limitedOffers.length > 0) {
                 limitedOffers.forEach((offer, index) => {
