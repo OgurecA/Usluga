@@ -527,7 +527,7 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
-function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
+function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescription, userDate) {
   const moment = require('moment'); // Подключение moment.js для работы с датами
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
@@ -537,8 +537,8 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   };
 
   // Временные метки пользователя
-  const userStart = toMinutes(userStartTime);
-  const userEnd = toMinutes(userEndTime);
+  const userStart = toMinutes(startTime);
+  const userEnd = toMinutes(endTime);
 
   // Преобразуем дату пользователя в объект Moment
   const userMomentDate = moment(userDate, 'DD/MM/YYYY');
@@ -1292,7 +1292,7 @@ function handleSearchService(chatId, text, userState, userId) {
               const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
               if (match) {
                 startTime = match[1];
-              endTime = match[2];
+                endTime = match[2];
               
                 console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
               }
