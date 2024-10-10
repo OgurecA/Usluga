@@ -1306,9 +1306,9 @@ function handleSearchService(chatId, text, userState, userId) {
                 sendAndTrackMessage(chatId, 'Ошибка: значение времени не указано. Пожалуйста, укажите время в формате "14.00-16.00".');
                 return;
               }
-              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+              const Range = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
-              console.log(timeRange);
+              console.log(Range);
 
               const str = userState.responses.description;
 
@@ -1319,7 +1319,9 @@ function handleSearchService(chatId, text, userState, userId) {
               const chars = str.split('');
               console.log(chars[8]);
               // Разделяем строку на две части
-              const [startTime, endTime] = timeRange.split('-');
+              const time = Range.split('-');
+              console.log(time[1]);
+              console.log(time[2]);
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
