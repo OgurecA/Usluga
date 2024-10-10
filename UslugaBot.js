@@ -1286,32 +1286,8 @@ function handleSearchService(chatId, text, userState, userId) {
 
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
               
-              console.log('Проверка времени:', timeRange);
-
-  // Проверка на наличие и корректность формата времени
-  if (!timeRange || typeof timeRange !== 'string') {
-    console.error(`Ошибка: timeRange имеет некорректное значение: ${timeRange}`);
-    sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
-    break;
-  }
-
-  // Логирование перед split, чтобы убедиться, что `-` присутствует
-  if (!timeRange.includes('-')) {
-    console.error(`Ошибка: timeRange не содержит символа '-': ${timeRange}`);
-    sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
-    break;
-  }
-
-  console.log('Time range перед split:', timeRange);
-
-
               // Разделяем строку на две части
-              try {
-                // Разделяем строку на две части с дополнительным логированием
-                const [startTime, endTime] = timeRange.split('-');
-                console.log(`Время после split: startTime=${startTime}, endTime=${endTime}`);
-              
-            
+              const [startTime, endTime] = userState.responses.time.split('-');
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
@@ -1338,10 +1314,6 @@ function handleSearchService(chatId, text, userState, userId) {
                     }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
                   });
               }
-            } catch (error) {
-              console.error('Ошибка при разбиении времени:', error);
-              sendAndTrackMessage(chatId, 'Ошибка при обработке времени. Пожалуйста, проверьте формат и повторите попытку.');
-            }
             } else {
               // Сообщение в случае отсутствия предложений по стране
               const noOffersMessage = isAnyCity
@@ -1352,7 +1324,6 @@ function handleSearchService(chatId, text, userState, userId) {
                 sendAndTrackResultMessage(chatId, noOffersMessage);
               }, 500);
             }
-            
           
             deleteAllTrackedMessages(chatId);
             delete states[chatId];
