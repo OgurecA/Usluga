@@ -1119,7 +1119,7 @@ bot.on('message', (msg) => {
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПОИСКА УСЛУГИ
 // ---------------------------------------------
 
-function handleSearchService(chatId, text, userState, userId) {
+async function handleSearchService(chatId, text, userState, userId) {
   switch (userState.step) {
     case 'search_1':
       const bestMatchCountry = findClosestCountry(text);
@@ -1338,10 +1338,12 @@ function handleSearchService(chatId, text, userState, userId) {
               
               const limitedOffers = sortedOffers.slice(0, 20);
               console.log(limitedOffers);
-            
-              if (limitedOffers.length > 0) {
-                limitedOffers.forEach((offer, index) => {
-                  // Генерируем уникальный ключ для предложения
+              
+              async function sendSortedOffers(chatId, sortedOffers) {
+                for (let index = 0; index < sortedOffers.length; index++) {
+                  const offer = sortedOffers[index];
+                  
+                  // Формируем сообщение для предложения
                   const offerMessage = `📋 *Предложение*\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
@@ -1351,11 +1353,17 @@ function handleSearchService(chatId, text, userState, userId) {
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
                                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-                    // Отправляем сообщение с кнопкой
-                    setTimeout(() => {
-                      sendAndTrackResultMessage(chatId, offerMessage);
-                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
-                  });
+              
+                  // Отправляем сообщение с задержкой между каждым следующим
+                  await sendAndTrackResultMessage(chatId, offerMessage); 
+              
+                  // Добавляем задержку в 500 мс (можно изменить при необходимости)
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                }
+              }              
+            
+              if (limitedOffers.length > 0) {
+                await sendSortedOffers(chatId, limitedOffers);
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
