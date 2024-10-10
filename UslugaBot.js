@@ -1302,9 +1302,24 @@ function handleSearchService(chatId, text, userState, userId) {
           
             if (offerRequests.length > 0) {
 
+              const timeRange = userState.responses.time;
 
-              setTimeout(() => {
-              const [startTime, endTime] = userState.responses.time.split('-');
+              if (typeof timeRange !== 'string') {
+                console.error(`Проблема с форматом времени: ожидается строка, но получено ${typeof timeRange}. Значение: ${timeRange}`);
+                throw new Error(`Ошибка формата времени: ожидается строка, но получено ${typeof timeRange}`);
+              }
+              
+              console.log(`Проверка значения: timeRange = ${timeRange}`);
+              
+              // Убедимся, что строка имеет корректный формат
+              if (!timeRange.includes('-')) {
+                console.error(`Некорректный формат времени: ${timeRange}. Ожидается формат "HH.MM-HH.MM".`);
+                throw new Error(`Некорректный формат времени: ${timeRange}. Ожидается формат "HH.MM-HH.MM".`);
+              }
+
+              const [startTime, endTime] = timeRange.split('-');
+              console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
+
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
               
@@ -1330,7 +1345,6 @@ function handleSearchService(chatId, text, userState, userId) {
                     }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
                   });
               }
-            }, 1000);
             } else {
               // Сообщение в случае отсутствия предложений по стране
               setTimeout(() => {
