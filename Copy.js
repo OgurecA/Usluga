@@ -2,8 +2,10 @@
 const TelegramBot = require('node-telegram-bot-api');
 const natural = require('natural');
 const db = require('./Database.js');
-const cities = require('all-the-cities');
+const axios = require('axios');
 const moment = require('moment-timezone');
+const stringSimilarity = require('string-similarity');
+
 
 // Настройка токена и создание экземпляра бота
 const token = '8083887592:AAGT_8XTHSgSPwbjc7hC8kRLner6v9ZJx2E';
@@ -197,7 +199,7 @@ const countries = [
   'Ukraine', 'Украина',
   'United Arab Emirates', 'UAE', 'Объединенные Арабские Эмираты', 'ОАЭ',
   'United Kingdom', 'UK', 'Великобритания',
-  'United States', 'USA', 'США', 'Америка',
+  'United States', 'USA', 'США', 'Америка', 'Пендосия',
   'Uruguay', 'Уругвай',
   'Uzbekistan', 'Узбекистан',
   'Vanuatu', 'Вануату',
@@ -212,6 +214,7 @@ const countries = [
 const countryMapping = {
   'Россия': 'Russia',
   'США': 'USA',
+  'Пендосия': 'USA',
   'Америка': 'USA',
   'United States': 'USA',
   'Китай': 'China',
@@ -332,191 +335,272 @@ const countryMapping = {
 };
 
 const countryToISO = {
-  'Russia': 'ru',
-  'United States': 'us',
-  'China': 'cn',
-  'India': 'in',
-  'Brazil': 'br',
-  'Germany': 'de',
-  'France': 'fr',
-  'Japan': 'jp',
-  'United Kingdom': 'gb',
-  'Italy': 'it',
-  'Mexico': 'mx',
-  'Canada': 'ca',
-  'Spain': 'es',
-  'Ukraine': 'ua',
-  'Netherlands': 'nl',
-  'Turkey': 'tr',
+  'Afghanistan': 'af',
+  'Albania': 'al',
+  'Algeria': 'dz',
+  'Andorra': 'ad',
+  'Angola': 'ao',
   'Argentina': 'ar',
+  'Armenia': 'am',
   'Australia': 'au',
   'Austria': 'at',
+  'Azerbaijan': 'az',
+  'Bahrain': 'bh',
+  'Bangladesh': 'bd',
+  'Belarus': 'by',
   'Belgium': 'be',
+  'Belize': 'bz',
+  'Benin': 'bj',
+  'Bhutan': 'bt',
+  'Bolivia': 'bo',
+  'Bosnia and Herzegovina': 'ba',
+  'Botswana': 'bw',
+  'Brazil': 'br',
+  'Brunei': 'bn',
   'Bulgaria': 'bg',
+  'Burkina Faso': 'bf',
+  'Burundi': 'bi',
+  'Cambodia': 'kh',
+  'Cameroon': 'cm',
+  'Canada': 'ca',
+  'Cape Verde': 'cv',
+  'Central African Republic': 'cf',
+  'Chad': 'td',
   'Chile': 'cl',
+  'China': 'cn',
   'Colombia': 'co',
+  'Comoros': 'km',
+  'Congo': 'cg',
+  'Costa Rica': 'cr',
+  'Croatia': 'hr',
+  'Cuba': 'cu',
+  'Cyprus': 'cy',
   'Czech Republic': 'cz',
   'Denmark': 'dk',
+  'Djibouti': 'dj',
+  'Dominica': 'dm',
+  'Dominican Republic': 'do',
+  'Ecuador': 'ec',
   'Egypt': 'eg',
+  'El Salvador': 'sv',
+  'Equatorial Guinea': 'gq',
+  'Eritrea': 'er',
+  'Estonia': 'ee',
+  'Eswatini': 'sz',
+  'Ethiopia': 'et',
+  'Fiji': 'fj',
   'Finland': 'fi',
+  'France': 'fr',
+  'Gabon': 'ga',
+  'Gambia': 'gm',
+  'Georgia': 'ge',
+  'Germany': 'de',
+  'Ghana': 'gh',
   'Greece': 'gr',
+  'Grenada': 'gd',
+  'Guatemala': 'gt',
+  'Guinea': 'gn',
+  'Guinea-Bissau': 'gw',
+  'Guyana': 'gy',
+  'Haiti': 'ht',
+  'Honduras': 'hn',
   'Hungary': 'hu',
   'Iceland': 'is',
+  'India': 'in',
   'Indonesia': 'id',
   'Iran': 'ir',
   'Iraq': 'iq',
   'Ireland': 'ie',
   'Israel': 'il',
+  'Italy': 'it',
+  'Ivory Coast': 'ci',
+  'Jamaica': 'jm',
+  'Japan': 'jp',
+  'Jordan': 'jo',
   'Kazakhstan': 'kz',
   'Kenya': 'ke',
+  'Kiribati': 'ki',
+  'Kosovo': 'xk',
+  'Kuwait': 'kw',
+  'Kyrgyzstan': 'kg',
+  'Laos': 'la',
+  'Latvia': 'lv',
+  'Lebanon': 'lb',
+  'Lesotho': 'ls',
+  'Liberia': 'lr',
+  'Libya': 'ly',
+  'Liechtenstein': 'li',
+  'Lithuania': 'lt',
+  'Luxembourg': 'lu',
+  'Madagascar': 'mg',
+  'Malawi': 'mw',
   'Malaysia': 'my',
+  'Maldives': 'mv',
+  'Mali': 'ml',
+  'Malta': 'mt',
+  'Marshall Islands': 'mh',
+  'Mauritania': 'mr',
+  'Mauritius': 'mu',
+  'Mexico': 'mx',
+  'Micronesia': 'fm',
+  'Moldova': 'md',
+  'Monaco': 'mc',
+  'Mongolia': 'mn',
+  'Montenegro': 'me',
   'Morocco': 'ma',
+  'Mozambique': 'mz',
+  'Myanmar': 'mm',
+  'Namibia': 'na',
+  'Nauru': 'nr',
   'Nepal': 'np',
+  'Netherlands': 'nl',
   'New Zealand': 'nz',
+  'Nicaragua': 'ni',
+  'Niger': 'ne',
+  'Nigeria': 'ng',
+  'North Korea': 'kp',
   'Norway': 'no',
+  'Oman': 'om',
   'Pakistan': 'pk',
+  'Palau': 'pw',
+  'Palestine': 'ps',
+  'Panama': 'pa',
+  'Papua New Guinea': 'pg',
+  'Paraguay': 'py',
+  'Peru': 'pe',
   'Philippines': 'ph',
   'Poland': 'pl',
   'Portugal': 'pt',
-  'Romania': 'ro',
-  'Saudi Arabia': 'sa',
-  'South Africa': 'za',
-  'South Korea': 'kr',
-  'Sweden': 'se',
-  'Switzerland': 'ch',
-  'Thailand': 'th',
-  'United Arab Emirates': 'ae',
-  'Venezuela': 've',
-  'Vietnam': 'vn',
-  'Egypt': 'eg',
-  'Saudi Arabia': 'sa',
   'Qatar': 'qa',
-  'Algeria': 'dz',
-  'Tunisia': 'tn',
-  'Kuwait': 'kw',
-  'Bahrain': 'bh',
-  'Jordan': 'jo',
-  'Oman': 'om',
-  'Libya': 'ly',
-  'Sudan': 'sd',
-  'Syria': 'sy',
-  'Lebanon': 'lb',
-  'Palestine': 'ps',
-  'Yemen': 'ye',
-  'Afghanistan': 'af',
-  'Bangladesh': 'bd',
-  'Bhutan': 'bt',
-  'Brunei': 'bn',
-  'Cambodia': 'kh',
-  'Laos': 'la',
-  'Maldives': 'mv',
-  'Myanmar': 'mm',
-  'Sri Lanka': 'lk',
-  'Tajikistan': 'tj',
-  'Turkmenistan': 'tm',
-  'Uzbekistan': 'uz',
-  'Belarus': 'by',
-  'Estonia': 'ee',
-  'Latvia': 'lv',
-  'Lithuania': 'lt',
-  'Moldova': 'md',
-  'Slovakia': 'sk',
-  'Slovenia': 'si',
-  'Croatia': 'hr',
-  'Serbia': 'rs',
-  'Bosnia and Herzegovina': 'ba',
-  'Macedonia': 'mk',
-  'Montenegro': 'me',
-  'Kosovo': 'xk',
-  'Albania': 'al',
-  'Georgia': 'ge',
-  'Armenia': 'am',
-  'Azerbaijan': 'az',
-  'Cyprus': 'cy',
-  'Malta': 'mt',
-  'Andorra': 'ad',
-  'San Marino': 'sm',
-  'Monaco': 'mc',
-  'Vatican City': 'va',
-  'Liechtenstein': 'li',
-  'Luxembourg': 'lu',
-  'Singapore': 'sg',
-  'Hong Kong': 'hk',
-  'Macau': 'mo',
-  'Mongolia': 'mn',
-  'North Korea': 'kp',
-  'Taiwan': 'tw',
-  'Fiji': 'fj',
-  'Papua New Guinea': 'pg',
-  'Solomon Islands': 'sb',
-  'Vanuatu': 'vu',
-  'Samoa': 'ws',
-  'Tonga': 'to',
-  'Kiribati': 'ki',
-  'Marshall Islands': 'mh',
-  'Micronesia': 'fm',
-  'Nauru': 'nr',
-  'Palau': 'pw',
-  'Tuvalu': 'tv',
-  'Antigua and Barbuda': 'ag',
-  'Bahamas': 'bs',
-  'Barbados': 'bb',
-  'Belize': 'bz',
-  'Cuba': 'cu',
-  'Dominica': 'dm',
-  'Dominican Republic': 'do',
-  'Grenada': 'gd',
-  'Haiti': 'ht',
-  'Jamaica': 'jm',
+  'Romania': 'ro',
+  'Russia': 'ru',
+  'Rwanda': 'rw',
   'Saint Kitts and Nevis': 'kn',
   'Saint Lucia': 'lc',
   'Saint Vincent and the Grenadines': 'vc',
-  'Trinidad and Tobago': 'tt',
-  'Angola': 'ao',
-  'Benin': 'bj',
-  'Botswana': 'bw',
-  'Burkina Faso': 'bf',
-  'Burundi': 'bi',
-  'Cape Verde': 'cv',
-  'Central African Republic': 'cf',
-  'Chad': 'td',
-  'Comoros': 'km',
-  'Democratic Republic of the Congo': 'cd',
-  'Djibouti': 'dj',
-  'Equatorial Guinea': 'gq',
-  'Eritrea': 'er',
-  'Eswatini': 'sz',
-  'Ethiopia': 'et',
-  'Gabon': 'ga',
-  'Gambia': 'gm',
-  'Ghana': 'gh',
-  'Guinea': 'gn',
-  'Guinea-Bissau': 'gw',
-  'Ivory Coast': 'ci',
-  'Lesotho': 'ls',
-  'Liberia': 'lr',
-  'Madagascar': 'mg',
-  'Malawi': 'mw',
-  'Mali': 'ml',
-  'Mauritania': 'mr',
-  'Mauritius': 'mu',
-  'Mozambique': 'mz',
-  'Namibia': 'na',
-  'Niger': 'ne',
-  'Nigeria': 'ng',
-  'Rwanda': 'rw',
+  'Samoa': 'ws',
+  'San Marino': 'sm',
+  'Saudi Arabia': 'sa',
   'Senegal': 'sn',
+  'Serbia': 'rs',
   'Seychelles': 'sc',
   'Sierra Leone': 'sl',
+  'Singapore': 'sg',
+  'Slovakia': 'sk',
+  'Slovenia': 'si',
+  'Solomon Islands': 'sb',
   'Somalia': 'so',
+  'South Africa': 'za',
+  'South Korea': 'kr',
   'South Sudan': 'ss',
+  'Spain': 'es',
+  'Sri Lanka': 'lk',
+  'Sudan': 'sd',
+  'Suriname': 'sr',
+  'Sweden': 'se',
+  'Switzerland': 'ch',
+  'Syria': 'sy',
+  'Taiwan': 'tw',
+  'Tajikistan': 'tj',
   'Tanzania': 'tz',
+  'Thailand': 'th',
   'Togo': 'tg',
+  'Tonga': 'to',
+  'Trinidad and Tobago': 'tt',
+  'Tunisia': 'tn',
+  'Turkey': 'tr',
+  'Turkmenistan': 'tm',
+  'Tuvalu': 'tv',
   'Uganda': 'ug',
+  'Ukraine': 'ua',
+  'United Arab Emirates': 'ae',
+  'United Kingdom': 'gb',
+  'USA': 'us',
+  'Uruguay': 'uy',
+  'Uzbekistan': 'uz',
+  'Vanuatu': 'vu',
+  'Vatican City': 'va',
+  'Venezuela': 've',
+  'Vietnam': 'vn',
+  'Yemen': 'ye',
   'Zambia': 'zm',
   'Zimbabwe': 'zw'
 };
 
+
+function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription) {
+  // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
+  const toMinutes = (time) => {
+    const [hours, minutes] = time.split('.').map(Number);
+    return hours * 60 + minutes;
+  };
+
+  // Временные метки пользователя
+  const userStart = toMinutes(userStartTime);
+  const userEnd = toMinutes(userEndTime);
+
+  // Функция для определения категории совпадения времени
+  const getTimeCategory = (offerStart, offerEnd) => {
+    // Полное совпадение
+    if (offerStart === userStart && offerEnd === userEnd) return 1;
+
+    // Одно время внутри другого
+    if ((offerStart >= userStart && offerEnd <= userEnd) || (userStart >= offerStart && userEnd <= offerEnd)) return 2;
+
+    // Частичное совпадение
+    if ((offerStart < userEnd && offerEnd > userStart) || (userStart < offerEnd && userEnd > offerStart)) return 3;
+
+    // Нет совпадения
+    return 4;
+  };
+
+  // Функция для расчета сходства описания с пользовательским описанием
+  const getDescriptionSimilarity = (offerDescription, userDescription) => {
+    return stringSimilarity.compareTwoStrings(offerDescription.toLowerCase(), userDescription.toLowerCase());
+  };
+
+  // Сортировка предложений по категории времени
+  return offers.sort((a, b) => {
+    // Преобразуем время в минуты
+    const offerStartA = toMinutes(a.startTime);
+    const offerEndA = toMinutes(a.endTime);
+    const offerStartB = toMinutes(b.startTime);
+    const offerEndB = toMinutes(b.endTime);
+
+    // Определяем категории для каждого предложения
+    const categoryA = getTimeCategory(offerStartA, offerEndA);
+    const categoryB = getTimeCategory(offerStartB, offerEndB);
+
+    // Сравниваем по категории совпадения
+    if (categoryA !== categoryB) return categoryA - categoryB;
+
+    // Внутри одной категории сортируем по степени сходства описания
+    const similarityA = getDescriptionSimilarity(a.description, userDescription);
+    const similarityB = getDescriptionSimilarity(b.description, userDescription);
+
+    return similarityB - similarityA; // Чем больше схожесть, тем выше позиция
+  });
+}
+
+// Пример использования
+const offers = [
+  { id: 1, startTime: '16.00', endTime: '16.00', description: 'обучение на дому' },
+  { id: 2, startTime: '16.00', endTime: '16.00', description: 'Выгул собаки' },
+  { id: 3, startTime: '16.00', endTime: '16.00', description: 'Нянька' },
+  { id: 4, startTime: '16.00', endTime: '16.00', description: 'Ремонт по дому' },
+  { id: 5, startTime: '16.00', endTime: '16.00', description: 'Мойка автомобиля' },
+  { id: 6, startTime: '16.00', endTime: '16.00', description: 'услуга доставки товара из европы' },
+  { id: 7, startTime: '16.00', endTime: '16.00', description: 'трезвый водитель' },
+
+];
+
+const userStartTime = '16.00';
+const userEndTime = '20.00';
+const userDescription = 'Обучение';
+
+// Сортировка по времени и описанию
+const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
+console.log('Отсортированные предложения:', sortedOffers);
 
 
 
@@ -607,6 +691,61 @@ bot.onText(/\/help/, async (msg) => {
     await sendAndTrackHelpMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
   }, 500); 
 });
+
+
+
+
+// Конфигурация Geonames
+const GEONAMES_USERNAME = 'acp044';
+
+// Функция для проверки написания города
+async function checkCityName(cityName, countryCode) {
+  try {
+    // Отправляем запрос к Geonames API для поиска города
+    const response = await axios.get('http://api.geonames.org/searchJSON', {
+      params: {
+        q: cityName,            // Название города для поиска
+        country: countryCode,   // Код страны (например, "RU")
+        maxRows: 1,             // Возвращаем только один результат
+        username: GEONAMES_USERNAME, // Имя пользователя Geonames
+        featureClass: 'P',      // Только населенные пункты
+        lang: 'ru'              // Язык ответа — русский
+      },
+    });
+
+    // Проверяем, есть ли результаты поиска
+    if (response.data.geonames && response.data.geonames.length > 0) {
+      const matchedCity = response.data.geonames[0].name;  // Название найденного города
+      const { lat, lng } = response.data.geonames[0];     // Координаты города
+
+      console.log(`Город "${cityName}" найден как "${matchedCity}". Извлекаем временную зону...`);
+
+      // Отправляем запрос на получение временной зоны по координатам города
+      const timezoneResponse = await axios.get('http://api.geonames.org/timezoneJSON', {
+        params: {
+          lat: lat,                // Широта города
+          lng: lng,                // Долгота города
+          username: GEONAMES_USERNAME // Имя пользователя Geonames
+        },
+      });
+
+      if (timezoneResponse.data && timezoneResponse.data.timezoneId) {
+        const timezone = timezoneResponse.data.timezoneId;
+        console.log(`Временная зона для города "${matchedCity}": ${timezone}.`);
+        return { isValid: true, matchedCity, timezone };
+      } else {
+        console.log(`Временная зона для города "${matchedCity}" не найдена.`);
+        return { isValid: true, matchedCity, timezone: null };
+      }
+    } else {
+      console.log(`Город "${cityName}" не найден в стране ${countryCode}.`);
+      return { isValid: false, suggestions: [] };
+    }
+  } catch (error) {
+    console.error('Ошибка при запросе к Geonames API:', error);
+    return { isValid: false, suggestions: [] };
+  }
+}
 
 
 
@@ -901,6 +1040,7 @@ bot.on('callback_query', async (callbackQuery) => {
 
 });
 
+
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
@@ -959,6 +1099,11 @@ function handleSearchService(chatId, text, userState, userId) {
       if (bestMatchCountry) {
         const englishCountryName = countryMapping[bestMatchCountry] || bestMatchCountry;
         userState.responses.country = englishCountryName;
+        userState.responses.answercountry = bestMatchCountry;
+
+        const countryISOCode = countryToISO[englishCountryName];
+        console.log(countryISOCode);
+        userState.responses.countryISO = countryISOCode;
 
         userState.step = 'search_2';
         sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
@@ -969,9 +1114,25 @@ function handleSearchService(chatId, text, userState, userId) {
     
       case 'search_2':
 
-      userState.responses.city = text;
-      userState.step = 'search_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
+      const countryCode = userState.responses.countryISO; // Получаем код страны из состояния пользователя
+      const cityName = text;
+
+      checkCityName(cityName, countryCode).then((result) => {
+        if (result.isValid) {
+          // Город подтвержден, сохраняем его
+          userState.responses.city = result.matchedCity;
+          userState.responses.timezone = result.timezone;
+          userState.step = 'search_3';
+          sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+        } else {
+          // Город не подтвержден, предлагаем варианты
+          const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
+          sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+        }
+      }).catch((error) => {
+        console.error('Ошибка при проверке города:', error);
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке города. Попробуйте снова.');
+      });
       break;
 
 
@@ -1034,24 +1195,31 @@ function handleSearchService(chatId, text, userState, userId) {
   
       // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
       const [day, month, year] = userState.responses.date.split('/');
-      const inputDate = new Date(`${year}-${month}-${day}`);
-      const today = new Date();
-  
+      const userTimezone = userState.responses.timezone || 'UTC';
+
+      const inputDate = moment.tz(`${year}-${month}-${day}`, 'YYYY-MM-DD', userTimezone);
+      console.log(inputDate);
+
+      const today = moment.tz(userTimezone);
+      console.log(today);
+
+      if (!inputDate.isValid() || !today.isValid()) {
+        console.error('Некорректное преобразование даты в объект moment:', { inputDate, today });
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке даты. Попробуйте снова.');
+        break;
+      }
+
       // Проверка на совпадение с сегодняшним днем
-      if (
-        inputDate.getFullYear() === today.getFullYear() &&
-        inputDate.getMonth() === today.getMonth() &&
-        inputDate.getDate() === today.getDate()
-      ) {
+      if (inputDate.isSame(today, 'day')) {
         // Получаем текущее время
-        const currentHour = today.getHours();
-        const currentMinute = today.getMinutes();
+        const currentHour = today.hours();
+        const currentMinute = today.minutes();
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
           sendAndTrackMessage(
             chatId,
-            `Начальное время услуги не может быть меньше или равно текущему времени (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы ищите услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
           );
           break;
         }
@@ -1113,14 +1281,13 @@ function handleSearchService(chatId, text, userState, userId) {
       sendAndTrackResultMessage(chatId, searchSummary);
 
             // Получение всех предложений из таблицы `offer`
-            const offerRequests = db.getOffersByCountry(userState.responses.country);
+            const offerRequests = db.getOffersByCity(userState.responses.country, userState.responses.city);
 
             if (offerRequests.length > 0) {
               // Проверка для режимов сортировки и фильтрации
-              const ignoreCity = userState.responses.city === "-";
               const ignoreDescription = userState.responses.description === "-";
             
-              let sortedOffers;
+              const sortedOffers = sortOffersByTime(offers, '12.00', '16.00');
             
               // Если оба поля — "-", выбираем 10 случайных предложений
               if (ignoreCity && ignoreDescription) {
@@ -1157,59 +1324,26 @@ function handleSearchService(chatId, text, userState, userId) {
                 sortedOffers = relevantOffers.slice(0, 5);
               }
             
-              
-              // Отправляем релевантные предложения, если они есть
+
               if (sortedOffers.length > 0) {
                 sortedOffers.forEach((offer, index) => {
-                  let offerMessage = `📋 *Предложение*\n\n` +
-                                     `Страна: ${offer.country}\n` +
-                                     `Город: ${offer.city}\n` +
-                                     `Дата: ${offer.date}\n` +
-                                     `Время: ${offer.time}\n` +
-                                     `Сумма: ${offer.amount}\n` +
-                                     `Описание: ${offer.description}\n` +
-                                     `Контакт: ${offer.contact}`;
-            
-                  // Кнопка "Ответить"
-                  const encodedOfferData = JSON.stringify({
-                    description: offer.description,
-                    contact: offer.contact
+                  // Генерируем уникальный ключ для предложения
+                  const offerMessage = `📋 *Предложение*\n\n` +
+                                       `Страна: ${offer.country}\n` +
+                                       `Город: ${offer.city}\n` +
+                                       `Дата: ${offer.date}\n` +
+                                       `Время: ${offer.time}\n` +
+                                       `Сумма: ${offer.amount}\n` +
+                                       `Описание: ${offer.description}\n` +
+                                       `Контакт: ${offerInfo.contact}\n\n` +
+                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+              
+                    // Отправляем сообщение с кнопкой
+                    setTimeout(() => {
+                      sendAndTrackResultMessage(chatId, offerMessage);
+                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
                   });
-
-                  const replyOptions = {
-                    reply_markup: {
-                      inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${encodedOfferData}` }],
-                      ],
-                    },
-                    parse_mode: 'Markdown',
-                  };
-            
-                  // Отправляем каждое предложение отдельно с кнопкой
-                  setTimeout(() => {
-                    sendAndTrackResultMessage(chatId, offerMessage, replyOptions);
-                  }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
-                });
-                bot.on('callback_query', (callbackQuery) => {
-                  const chatId = callbackQuery.message.chat.id;
-                  const data = callbackQuery.data;
-                
-                  // Проверяем, начинается ли callback_data с 'reply_'
-                  if (data.startsWith('reply_')) {
-                    // Извлекаем и декодируем информацию о предложении из callback_data
-                    const offerInfo = JSON.parse(data.replace('reply_', ''));
-                
-                    // Формируем сообщение с контактной информацией и подробностями заявки
-                    const replyMessage = `📩 *Контактная информация и подробности*\n\n` +
-                                         `Описание услуги: ${offerInfo.description}\n` +
-                                         `Контакт: ${offerInfo.contact}\n\n` +
-                                         `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-                
-                    // Отправляем сообщение пользователю
-                    bot.sendMessage(chatId, replyMessage, { parse_mode: 'Markdown' });
-                  }
-                });
-                
+              
             
               } else {
                 // Сообщение в случае отсутствия предложений
@@ -1227,6 +1361,7 @@ function handleSearchService(chatId, text, userState, userId) {
                     sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
                 
                     alternativeOffers.forEach((offer, index) => {
+                      const offerId = `offer:${generateRandomId()}`;
                       let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
                                                `Страна: ${offer.country}\n` +
                                                `Город: ${offer.city}\n` +
@@ -1234,23 +1369,16 @@ function handleSearchService(chatId, text, userState, userId) {
                                                `Время: ${offer.time}\n` +
                                                `Сумма: ${offer.amount}\n` +
                                                `Описание: ${offer.description}\n` +
-                                               `Контакт: ${offer.contact}`;
-              
-                      // Кнопка "Ответить"
-                      const alternativeOptions = {
-                        reply_markup: {
-                          inline_keyboard: [
-                            [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                          ],
-                        },
-                        parse_mode: 'Markdown',
-                      };
+                                               `Контакт: ${offer.contact}` +
+                                               `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
               
                       // Отправляем каждое альтернативное предложение отдельно с кнопкой
                       setTimeout(() => {
-                        sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
-                      }, index * 100); // Задержка перед отправкой каждого сообщения
+                        sendAndTrackResultMessage(chatId, alternativeMessage);
+                      }, index * 100);
                     });
+
+
                   } else {
                     setTimeout(() => {
                       sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
@@ -1285,9 +1413,12 @@ function handleProvideService(chatId, text, userState, userId) {
       if (bestMatchCountry) {
         const englishCountryName = countryMapping[bestMatchCountry] || bestMatchCountry;
         userState.responses.country = englishCountryName;
+        userState.responses.answercountry = bestMatchCountry;
 
         const countryISOCode = countryToISO[englishCountryName];
         console.log(countryISOCode);
+        userState.responses.countryISO = countryISOCode;
+
         userState.step = 'provide_2';
         sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
       } else {
@@ -1297,9 +1428,25 @@ function handleProvideService(chatId, text, userState, userId) {
     
       case 'provide_2':
 
-      userState.responses.city = text;
-      userState.step = 'provide_3';
-      sendAndTrackMessage(chatId, 'Укажите дату, когда вы готовы оказать услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.');
+      const countryCode = userState.responses.countryISO; // Получаем код страны из состояния пользователя
+      const cityName = text;
+
+      checkCityName(cityName, countryCode).then((result) => {
+        if (result.isValid) {
+          // Город подтвержден, сохраняем его
+          userState.responses.city = result.matchedCity;
+          userState.responses.timezone = result.timezone;
+          userState.step = 'provide_3';
+          sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вы оказываете услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+        } else {
+          // Город не подтвержден, предлагаем варианты
+          const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
+          sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+        }
+      }).catch((error) => {
+        console.error('Ошибка при проверке города:', error);
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке города. Попробуйте снова.');
+      });
       break;
 
 
@@ -1348,23 +1495,55 @@ function handleProvideService(chatId, text, userState, userId) {
         // Проверка, что время реально: часы от 0 до 23, минуты от 0 до 59
         const [, startHour, startMinute, endHour, endMinute] = text.match(timeRegex);
 
-        // Проверяем, что время реально: часы от 0 до 23, минуты от 0 до 59
-        const isRealTime = (hour, minute) => hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
-    
         const startH = parseInt(startHour, 10);
         const startM = parseInt(startMinute, 10);
         const endH = parseInt(endHour, 10);
         const endM = parseInt(endMinute, 10);
     
         // Проверяем реальность времени начала и конца
-        if (!isRealTime(startH, startM) || !isRealTime(endH, endM)) {
-          sendAndTrackMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
-        } else {
+        // Проверка: часы и минуты должны быть в корректных диапазонах
+      if (startH < 0 || startH > 23 || startM < 0 || startM > 59 || endH < 0 || endH > 23 || endM < 0 || endM > 59) {
+        sendAndTrackMessage(chatId, 'Введено нереальное время. Убедитесь, что часы от 00 до 23, а минуты — от 00 до 59.');
+        break;
+      }
+  
+      // Проверка: если дата - сегодняшняя, начальное время должно быть больше текущего времени пользователя
+      const [day, month, year] = userState.responses.date.split('/');
+      const userTimezone = userState.responses.timezone || 'UTC';
+
+      const inputDate = moment.tz(`${year}-${month}-${day}`, 'YYYY-MM-DD', userTimezone);
+      console.log(inputDate);
+
+      const today = moment.tz(userTimezone);
+      console.log(today);
+
+      if (!inputDate.isValid() || !today.isValid()) {
+        console.error('Некорректное преобразование даты в объект moment:', { inputDate, today });
+        sendAndTrackMessage(chatId, 'Произошла ошибка при проверке даты. Попробуйте снова.');
+        break;
+      }
+
+      // Проверка на совпадение с сегодняшним днем
+      if (inputDate.isSame(today, 'day')) {
+        // Получаем текущее время
+        const currentHour = today.hours();
+        const currentMinute = today.minutes();
+  
+        // Проверка: начальное время должно быть строго больше текущего времени
+        if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
+          sendAndTrackMessage(
+            chatId,
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы оказываете услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+          );
+          break;
+        }
+      }
+
           // Если время корректно, сохраняем его и переходим к следующему шагу
           userState.responses.time = text;
           userState.step = 'provide_5';
           sendAndTrackMessage(chatId, 'Укажите сумму за которую вы готовы выполнить услугу (например, 5000 рублей, 30 евро, 100 юаней):');
-        }
+
       } else {
         // Сообщение об ошибке формата
         sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
@@ -1463,6 +1642,7 @@ function handleProvideService(chatId, text, userState, userId) {
       
           if (sortedSearches.length > 0) {
             sortedSearches.forEach((offer, index) => {
+              const offerId = `offer:${generateRandomId()}`;
               let searchMessage = `📋 *Заявки*\n\n` +
                                  `Страна: ${offer.country}\n` +
                                  `Город: ${offer.city}\n` +
@@ -1470,23 +1650,14 @@ function handleProvideService(chatId, text, userState, userId) {
                                  `Время: ${offer.time}\n` +
                                  `Сумма: ${offer.amount}\n` +
                                  `Описание: ${offer.description}\n` +
-                                 `Контакт: ${offer.contact}`;
+                                 `Контакт: ${offer.contact}` +
+                                 `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
         
-              // Кнопка "Ответить"
-              const replyOptions = {
-                reply_markup: {
-                  inline_keyboard: [
-                    [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                  ],
-                },
-                parse_mode: 'Markdown',
-              };
-        
-              // Отправляем каждое предложение отдельно с кнопкой
-              setTimeout(() => {
-                sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
-              }, index * 100); // Задержка перед отправкой каждого сообщения (чтобы сообщения шли не одновременно)
-            });
+                // Отправляем сообщение с кнопкой
+                setTimeout(() => {
+                  sendAndTrackResultMessage(chatId, searchMessage, replyOptions);
+                }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
+              });
       
         } else {
           // Сообщение в случае отсутствия предложений
@@ -1504,6 +1675,7 @@ function handleProvideService(chatId, text, userState, userId) {
                 sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
 
                 alternativeSearches.forEach((offer, index) => {
+                  const offerId = `offer:${generateRandomId()}`;
                   let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
                                            `Страна: ${offer.country}\n` +
                                            `Город: ${offer.city}\n` +
@@ -1511,23 +1683,17 @@ function handleProvideService(chatId, text, userState, userId) {
                                            `Время: ${offer.time}\n` +
                                            `Сумма: ${offer.amount}\n` +
                                            `Описание: ${offer.description}\n` +
-                                           `Контакт: ${offer.contact}`;
+                                           `Контакт: ${offer.contact}` +
+                                           `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
           
-                  // Кнопка "Ответить"
-                  const alternativeOptions = {
-                    reply_markup: {
-                      inline_keyboard: [
-                        [{ text: 'Ответить', callback_data: `reply_${offer.id}` }],
-                      ],
-                    },
-                    parse_mode: 'Markdown',
-                  };
-          
-                  // Отправляем каждое альтернативное предложение отдельно с кнопкой
-                  setTimeout(() => {
-                    sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
-                  }, index * 100); // Задержка перед отправкой каждого сообщения
+
+              
+                    // Отправляем сообщение с кнопкой
+                    setTimeout(() => {
+                      sendAndTrackResultMessage(chatId, alternativeMessage, alternativeOptions);
+                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
                 });
+
             } else {
               setTimeout(() => {
                 sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
@@ -1575,6 +1741,10 @@ function findClosestCountry(input) {
   });
 
   return highestScore > 0.7 ? bestMatch : null;
+}
+
+function generateRandomId() {
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Генерируем случайное 10-значное число
 }
 
 // Запуск бота

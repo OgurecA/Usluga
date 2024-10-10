@@ -590,17 +590,11 @@ const offers = [
   { id: 4, startTime: '16.00', endTime: '16.00', description: 'Ремонт по дому' },
   { id: 5, startTime: '16.00', endTime: '16.00', description: 'Мойка автомобиля' },
   { id: 6, startTime: '16.00', endTime: '16.00', description: 'услуга доставки товара из европы' },
-  { id: 7, startTime: '16.00', endTime: '16.00', description: 'трезвый водитель' },
+  { id: 7, startTime: '16.00', endTime: '16.00', description: 'трезвый' },
 
 ];
 
-const userStartTime = '16.00';
-const userEndTime = '20.00';
-const userDescription = 'Обучение';
 
-// Сортировка по времени и описанию
-const sortedOffers = sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription);
-console.log('Отсортированные предложения:', sortedOffers);
 
 
 
@@ -1284,45 +1278,15 @@ function handleSearchService(chatId, text, userState, userId) {
             const offerRequests = db.getOffersByCity(userState.responses.country, userState.responses.city);
 
             if (offerRequests.length > 0) {
-              // Проверка для режимов сортировки и фильтрации
-              const ignoreDescription = userState.responses.description === "-";
-            
-              const sortedOffers = sortOffersByTime(offers, '12.00', '16.00');
-            
-              // Если оба поля — "-", выбираем 10 случайных предложений
-              if (ignoreCity && ignoreDescription) {
-                sortedOffers = offerRequests.sort(() => 0.5 - Math.random()).slice(0, 10);
-              } else {
-                // Сравниваем введенные данные с предложениями и вычисляем индексы схожести
-                sortedOffers = offerRequests
-                  .map((offer) => {
-                    const citySimilarity = ignoreCity
-                      ? 1 // Если игнорируем город, ставим максимальное значение для citySimilarity
-                      : natural.JaroWinklerDistance(userState.responses.city.toLowerCase(), offer.city.toLowerCase());
-            
-                    const descriptionSimilarity = ignoreDescription
-                      ? 1 // Если игнорируем описание, ставим максимальное значение для descriptionSimilarity
-                      : natural.JaroWinklerDistance(userState.responses.description.toLowerCase(), offer.description.toLowerCase());
-                    
-                    return { ...offer, citySimilarity, descriptionSimilarity };
-                  })
-                  .sort((a, b) => {
-                    // Сортируем сначала по индексу схожести города, если сравниваем города
-                    if (!ignoreCity && b.citySimilarity !== a.citySimilarity) {
-                      return b.citySimilarity - a.citySimilarity;
-                    }
-                    // Сортируем по индексу схожести описания
-                    return b.descriptionSimilarity - a.descriptionSimilarity;
-                  });
-            
-                // Фильтруем предложения по схожести, если игнорирование не установлено
-                const relevantOffers = sortedOffers.filter((offer) => {
-                  return (ignoreCity || offer.citySimilarity >= 0.7) && (ignoreDescription || offer.descriptionSimilarity >= 0.5);
-                });
-            
-                // Оставляем только 5 самых подходящих предложений
-                sortedOffers = relevantOffers.slice(0, 5);
-              }
+
+              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+
+              // Разделяем строку на две части
+              const [startTime, endTime] = timeRange.split('-');
+
+              const userDescription = userState.responses.description;
+              
+              const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription);            
             
 
               if (sortedOffers.length > 0) {
@@ -1345,53 +1309,13 @@ function handleSearchService(chatId, text, userState, userId) {
                   });
               
             
-              } else {
-                // Сообщение в случае отсутствия предложений
-                const cityMatches = sortedOffers.filter((offer) => offer.citySimilarity >= 0.7);
-
-                if (cityMatches.length === 0) {
-                  setTimeout(() => {
-                    sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по указанному городу. Попробуйте изменить запрос.\n/help');
-                  }, 500);
-                } else {
-                  // Понижаем порог схожести по описанию до 0.3 и выводим альтернативные предложения
-                  const alternativeOffers = cityMatches.filter((offer) => offer.descriptionSimilarity >= 0.3);
-
-                  if (alternativeOffers.length > 0) {
-                    sendAndTrackResultMessage(chatId, 'Совпадений по вашему запросу не найдено, но может вас заинтересуют эти предложения:\n/help\n\n');
-                
-                    alternativeOffers.forEach((offer, index) => {
-                      const offerId = `offer:${generateRandomId()}`;
-                      let alternativeMessage = `💡 *Альтернативное предложение*:\n\n` +
-                                               `Страна: ${offer.country}\n` +
-                                               `Город: ${offer.city}\n` +
-                                               `Дата: ${offer.date}\n` +
-                                               `Время: ${offer.time}\n` +
-                                               `Сумма: ${offer.amount}\n` +
-                                               `Описание: ${offer.description}\n` +
-                                               `Контакт: ${offer.contact}` +
-                                               `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-              
-                      // Отправляем каждое альтернативное предложение отдельно с кнопкой
-                      setTimeout(() => {
-                        sendAndTrackResultMessage(chatId, alternativeMessage);
-                      }, index * 100);
-                    });
-
-
-                  } else {
-                    setTimeout(() => {
-                      sendAndTrackResultMessage(chatId, 'На данный момент нет совпадений по услугам в этом городе.\n/help');
-                    }, 500);
-                  }
-                }
               }
             
             
             } else {
               // Сообщение в случае отсутствия предложений по стране
               setTimeout(() => {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
               }, 500);
             }
             deleteAllTrackedMessages(chatId);
