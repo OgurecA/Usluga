@@ -532,8 +532,33 @@ function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescript
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
-    const [hours, minutes] = time.split('.').map(Number);
-    return hours * 60 + minutes;
+    // Проверка значения на undefined или пустую строку
+    if (!time || typeof time !== 'string') {
+      console.error(`Некорректный формат времени: ${time}`);
+      return 0; // Возвращаем 0 для некорректного времени
+    }
+
+    // Добавляем логирование перед split, чтобы видеть входящее значение
+    console.log(`Преобразование времени: входное значение = ${time}`);
+
+    // Проверяем, содержит ли строка ожидаемый формат
+    if (!time.includes('.')) {
+      console.error(`Ошибка: ожидаемый формат времени (HH.MM), но получено: ${time}`);
+      return 0;
+    }
+
+    // Пробуем разделить строку на часы и минуты
+    try {
+      const [hours, minutes] = time.split('.').map(Number);
+      if (isNaN(hours) || isNaN(minutes)) {
+        console.error(`Ошибка: часы или минуты не являются числами. Входное значение: ${time}`);
+        return 0;
+      }
+      return (hours * 60) + (minutes || 0); // Обработка случая, если минуты не указаны
+    } catch (error) {
+      console.error(`Ошибка при разбиении строки времени: ${error.message}`);
+      return 0;
+    }
   };
 
   // Временные метки пользователя
