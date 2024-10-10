@@ -1308,8 +1308,7 @@ function handleSearchService(chatId, text, userState, userId) {
               const timeRange = userState.responses.time;
 
               if (typeof timeRange == 'string') {
-                console.error(`Проблема с форматом времени: ожидается строка, но получено ${typeof timeRange}. Значение: ${timeRange}`);
-                throw new Error(`Ошибка формата времени: ожидается строка, но получено ${typeof timeRange}`);
+                console.log(`Получено ${typeof timeRange}. Значение: ${timeRange}`);
               }
               
               console.log(`Проверка значения: timeRange = ${timeRange}`);
