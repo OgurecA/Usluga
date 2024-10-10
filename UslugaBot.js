@@ -1281,13 +1281,18 @@ function handleSearchService(chatId, text, userState, userId) {
             const offerRequests = isAnyCity 
               ? db.getOffersByCountry(userState.responses.country) 
               : db.getOffersByCity(userState.responses.country, userState.responses.city);
+
+            
           
             if (offerRequests.length > 0) {
+              let startTime;
+              let endTime;
 
               const timeRange = userState.responses.time.trim(); // Предполагаем, что время выглядит как "14.00-16.00"
               const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
               if (match) {
-                const [startTime, endTime] = [match[1], match[2]];
+                startTime = match[1];
+              endTime = match[2];
               
                 console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
               }
