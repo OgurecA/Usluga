@@ -618,15 +618,15 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 }
 
 const offerRequests = [
-  { id: 1, date: '15/10/2024', startTime: '12.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
-  { id: 2, date: '16/10/2024', startTime: '13.00', endTime: '14.00', description: 'Настройка ПО и обслуживание' },
-  { id: 3, date: '17/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
-  { id: 4, date: '17/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
-  { id: 5, date: '17/10/2024', startTime: '09.00', endTime: '20.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 6, date: '17/10/2024', startTime: '13.00', endTime: '15.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 7, date: '17/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 8, date: '17/10/2024', startTime: '11.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 9, date: '17/10/2024', startTime: '12.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 1, date: '15/10/2024', time: '12.00-16.00', description: 'Техническое обслуживание оборудования' },
+  { id: 2, date: '16/10/2024', time: '13.00-14.00', description: 'Настройка ПО и обслуживание' },
+  { id: 3, date: '17/10/2024', time: '15.00-17.00', description: 'Обслуживание и проверка систем' },
+  { id: 4, date: '17/10/2024', time: '14.00-15.00', description: 'Проверка состояния оборудования' },
+  { id: 5, date: '17/10/2024', time: '09.00-20.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 6, date: '17/10/2024', time: '13.00-15.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 7, date: '17/10/2024', time: '15.00-17.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 8, date: '17/10/2024', time: '11.00-13.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 9, date: '17/10/2024', time: '12.00-16.00', description: 'Обслуживание серверов и оборудования' },
 ];
 
 const sort = sortOffersByTimeAndDescription(offerRequests, '12.00', '16.00', 'Обслуживание серверов и оборудования', '17/10/2024')
