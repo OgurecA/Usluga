@@ -1310,10 +1310,7 @@ function handleSearchService(chatId, text, userState, userId) {
                 // Разделяем строку на две части с дополнительным логированием
                 const [startTime, endTime] = timeRange.split('-');
                 console.log(`Время после split: startTime=${startTime}, endTime=${endTime}`);
-              } catch (error) {
-                console.error('Ошибка при разбиении времени:', error);
-                sendAndTrackMessage(chatId, 'Ошибка при обработке времени. Пожалуйста, проверьте формат и повторите попытку.');
-              }
+              
             
 
               const userDescription = userState.responses.description;
@@ -1341,6 +1338,10 @@ function handleSearchService(chatId, text, userState, userId) {
                     }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
                   });
               }
+            } catch (error) {
+              console.error('Ошибка при разбиении времени:', error);
+              sendAndTrackMessage(chatId, 'Ошибка при обработке времени. Пожалуйста, проверьте формат и повторите попытку.');
+            }
             } else {
               // Сообщение в случае отсутствия предложений по стране
               const noOffersMessage = isAnyCity
@@ -1351,6 +1352,7 @@ function handleSearchService(chatId, text, userState, userId) {
                 sendAndTrackResultMessage(chatId, noOffersMessage);
               }, 500);
             }
+            
           
             deleteAllTrackedMessages(chatId);
             delete states[chatId];
