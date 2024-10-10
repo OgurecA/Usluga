@@ -1106,7 +1106,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "-") {
+      if (cityName === "0") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'search_3';
@@ -1316,8 +1316,12 @@ function handleSearchService(chatId, text, userState, userId) {
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
+              const noOffersMessage = isAnyCity
+                ? 'На данный момент нет доступных предложений по указанной стране.\n/help'
+                : 'На данный момент нет доступных предложений по указанному городу.\n/help';
+
               setTimeout(() => {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
+                sendAndTrackResultMessage(chatId, noOffersMessage);
               }, 500);
             }
           
@@ -1357,7 +1361,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "-") {
+      if (cityName === "0") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'provide_3';
@@ -1542,6 +1546,8 @@ function handleProvideService(chatId, text, userState, userId) {
 
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
+              console.log('Time range:', timeRange);
+
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
 
@@ -1572,8 +1578,12 @@ function handleProvideService(chatId, text, userState, userId) {
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
+              const noOffersMessage = isAnyCity
+                ? 'На данный момент нет доступных предложений по указанной стране.\n/help'
+                : 'На данный момент нет доступных предложений по указанному городу.\n/help';
+
               setTimeout(() => {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
+                sendAndTrackResultMessage(chatId, noOffersMessage);
               }, 500);
             }
 
