@@ -1145,7 +1145,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "-") {
+      if (cityName === "0") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'search_3';
@@ -1399,7 +1399,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "-") {
+      if (cityName === "0") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'provide_3';
