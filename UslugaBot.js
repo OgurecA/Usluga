@@ -1356,7 +1356,7 @@ function handleSearchService(chatId, text, userState, userId) {
                                        `Время: ${offer.time}\n` +
                                        `Сумма: ${offer.amount}\n` +
                                        `Описание: ${offer.description}\n` +
-                                       `Контакт: ${offerInfo.contact}\n\n` +
+                                       `Контакт: ${offer.contact}\n\n` +
                                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
                     // Отправляем сообщение с кнопкой
                     setTimeout(() => {
