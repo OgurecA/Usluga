@@ -527,30 +527,18 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
-function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescription, userDate) {
+function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
   const moment = require('moment'); // Подключение moment.js для работы с датами
 
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
-
-
-    // Пробуем разделить строку на часы и минуты
-    try {
-      const [hours, minutes] = time.split('.').map(Number);
-      if (isNaN(hours) || isNaN(minutes)) {
-        console.error(`Ошибка: часы или минуты не являются числами. Входное значение: ${time}`);
-        return 0;
-      }
-      return (hours * 60) + (minutes || 0); // Обработка случая, если минуты не указаны
-    } catch (error) {
-      console.error(`Ошибка при разбиении строки времени: ${error.message}`);
-      return 0;
-    }
+    const [hours, minutes] = time.split('.').map(Number);
+    return hours * 60 + minutes;
   };
 
   // Временные метки пользователя
-  const userStart = toMinutes(startTime);
-  const userEnd = toMinutes(endTime);
+  const userStart = toMinutes(userStartTime);
+  const userEnd = toMinutes(userEndTime);
 
   // Преобразуем дату пользователя в объект Moment
   const userMomentDate = moment(userDate, 'DD/MM/YYYY');
@@ -604,18 +592,17 @@ function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescript
 }
 
 const offerRequests = [
-  { date: '15/10/2024', startTime: '14.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
-  { date: '14/10/2024', startTime: '13.00', endTime: '17.00', description: 'Настройка ПО и обслуживание' },
-  { date: '15/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
-  { date: '16/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
-  { date: '14/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { date: '15/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { date: '16/10/2024', startTime: '14.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
-  { date: '17/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { date: '17/10/2024', startTime: '12.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 1, date: '15/10/2024', startTime: '14.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
+  { id: 2, date: '14/10/2024', startTime: '13.00', endTime: '17.00', description: 'Настройка ПО и обслуживание' },
+  { id: 3, date: '15/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
+  { id: 4, date: '16/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
+  { id: 5, date: '14/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 6, date: '15/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 7, date: '16/10/2024', startTime: '14.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 8, date: '17/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 9, date: '17/10/2024', startTime: '12.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
 ];
 
-const sorted = sortOffersByTimeAndDescription(offerRequests, '13.00', '14.00', 'Обслуживание серверов и оборудования', '16/10/2024');
 
 
 
@@ -1133,7 +1120,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "0") {
+      if (cityName === "-") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'search_3';
@@ -1142,15 +1129,14 @@ function handleSearchService(chatId, text, userState, userId) {
           `Город подтвержден как "Любой город". Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`
         );
       } else {
+
         checkCityName(cityName, countryCode).then((result) => {
           if (result.isValid) {
-            userState.responses.city = result.matchedCity;
-            userState.responses.timezone = result.timezone;
-            userState.step = 'search_3';
-            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+            // Город подтвержден, сохраняем его
           } else {
             // Город не подтвержден, предлагаем варианты
-            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Попробуйте снова.`);
+            const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
+            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
           }
         }).catch((error) => {
           console.error('Ошибка при проверке города:', error);
@@ -1297,7 +1283,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
@@ -1308,22 +1294,13 @@ function handleSearchService(chatId, text, userState, userId) {
             const offerRequests = isAnyCity 
               ? db.getOffersByCountry(userState.responses.country) 
               : db.getOffersByCity(userState.responses.country, userState.responses.city);
-
-            
           
             if (offerRequests.length > 0) {
-              let startTime;
-              let endTime;
 
-              const timeRange = userState.responses.time.trim(); // Предполагаем, что время выглядит как "14.00-16.00"
-              const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
-              if (match) {
-                startTime = match[1];
-                endTime = match[2];
-              
-                console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
-              }
-              
+              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+
+              // Разделяем строку на две части
+              const [startTime, endTime] = timeRange.split('-');
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
@@ -1342,7 +1319,7 @@ function handleSearchService(chatId, text, userState, userId) {
                                        `Время: ${offer.time}\n` +
                                        `Сумма: ${offer.amount}\n` +
                                        `Описание: ${offer.description}\n` +
-                                       `Контакт: ${offer.contact}\n\n` +
+                                       `Контакт: ${offerInfo.contact}\n\n` +
                                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
                     // Отправляем сообщение с кнопкой
                     setTimeout(() => {
@@ -1352,12 +1329,8 @@ function handleSearchService(chatId, text, userState, userId) {
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
-              const noOffersMessage = isAnyCity
-                ? 'На данный момент нет доступных предложений по указанной стране.\n/help'
-                : 'На данный момент нет доступных предложений по указанному городу.\n/help';
-
               setTimeout(() => {
-                sendAndTrackResultMessage(chatId, noOffersMessage);
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
               }, 500);
             }
           
@@ -1397,7 +1370,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const cityName = text.trim(); // Убираем лишние пробелы из введенного текста
     
       // Проверка: если пользователь ввел "-", то пропускаем проверку на валидность города
-      if (cityName === "0") {
+      if (cityName === "-") {
         userState.responses.city = "Любой город"; // Если нет конкретного города, используем заглушку или условное значение
         userState.responses.timezone = "UTC"; // Можно также указать общий часовой пояс, если он обязателен
         userState.step = 'provide_3';
@@ -1566,11 +1539,10 @@ function handleProvideService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
-      
       
       sendAndTrackResultMessage(chatId, searchSummary);
 
@@ -1581,17 +1553,10 @@ function handleProvideService(chatId, text, userState, userId) {
           
             if (searchRequests.length > 0) {
 
-              let startTime;
-              let endTime;
+              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
-              const timeRange = userState.responses.time.trim(); // Предполагаем, что время выглядит как "14.00-16.00"
-              const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
-              if (match) {
-                startTime = match[1];
-                endTime = match[2];
-              
-                console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
-              }
+              // Разделяем строку на две части
+              const [startTime, endTime] = timeRange.split('-');
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
@@ -1603,7 +1568,7 @@ function handleProvideService(chatId, text, userState, userId) {
               if (limitedSearches.length > 0) {
                 limitedSearches.forEach((offer, index) => {
                   // Генерируем уникальный ключ для предложения
-                  const offerMessage = `📋 *Заявка*\n\n` +
+                  const offerMessage = `📋 *Предложение*\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
                                        `Дата: ${offer.date}\n` +
@@ -1620,12 +1585,8 @@ function handleProvideService(chatId, text, userState, userId) {
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
-              const noOffersMessage = isAnyCity
-                ? 'На данный момент нет доступных предложений по указанной стране.\n/help'
-                : 'На данный момент нет доступных предложений по указанному городу.\n/help';
-
               setTimeout(() => {
-                sendAndTrackResultMessage(chatId, noOffersMessage);
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
               }, 500);
             }
 
@@ -1664,6 +1625,9 @@ function findClosestCountry(input) {
   return highestScore > 0.7 ? bestMatch : null;
 }
 
+function generateRandomId() {
+  return Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Генерируем случайное 10-значное число
+}
 
 // Запуск бота
 console.log("Бот запущен и готов к работе...");
