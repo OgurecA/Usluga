@@ -1337,7 +1337,6 @@ async function handleSearchService(chatId, text, userState, userId) {
               const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription, userDate); 
               
               const limitedOffers = sortedOffers.slice(0, 20);
-              console.log(limitedOffers);
               
               async function sendSortedOffers(chatId, sortedOffers) {
                 for (let index = 0; index < sortedOffers.length; index++) {
@@ -1367,9 +1366,11 @@ async function handleSearchService(chatId, text, userState, userId) {
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
-              setTimeout(() => {
+              if (isAnyCity) {
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+              } else {
                 sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
-              }, 100);
+              }
             }
           
             deleteAllTrackedMessages(chatId);
@@ -1382,7 +1383,7 @@ async function handleSearchService(chatId, text, userState, userId) {
 // ЛОГИКА ДЛЯ ОБРАБОТКИ ПРЕДОСТАВЛЕНИЯ УСЛУГИ
 // ---------------------------------------------
 
-function handleProvideService(chatId, text, userState, userId) {
+async function handleProvideService(chatId, text, userState, userId) {
   switch (userState.step) {
     case 'provide_1':
       const bestMatchCountry = findClosestCountry(text);
@@ -1602,10 +1603,12 @@ function handleProvideService(chatId, text, userState, userId) {
               const sortedSearches = sortOffersByTimeAndDescription(searchRequests, startTime, endTime, userDescription, userDate); 
               
               const limitedSearches = sortedSearches.slice(0, 20);
-            
-              if (limitedSearches.length > 0) {
-                limitedSearches.forEach((offer, index) => {
-                  // Генерируем уникальный ключ для предложения
+
+              async function sendSortedOffers(chatId, sortedOffers) {
+                for (let index = 0; index < sortedOffers.length; index++) {
+                  const offer = sortedOffers[index];
+                  
+                  // Формируем сообщение для предложения
                   const offerMessage = `📋 *Предложение*\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
@@ -1615,17 +1618,25 @@ function handleProvideService(chatId, text, userState, userId) {
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
                                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
-                    // Отправляем сообщение с кнопкой
-                    setTimeout(() => {
-                      sendAndTrackResultMessage(chatId, offerMessage);
-                    }, index * 100); // Задержка перед отправкой каждого сообщения (100 мс)
-                  });
+              
+                  // Отправляем сообщение с задержкой между каждым следующим
+                  await sendAndTrackResultMessage(chatId, offerMessage); 
+              
+                  // Добавляем задержку в 500 мс (можно изменить при необходимости)
+                  await new Promise((resolve) => setTimeout(resolve, 500));
+                }
+              }    
+            
+              if (limitedSearches.length > 0) {
+                await sendSortedOffers(chatId, limitedOffers);               
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
-              setTimeout(() => {
+              if (isAnyCity) {
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+              } else {
                 sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
-              }, 500);
+              }
             }
 
       deleteAllTrackedMessages(chatId);
