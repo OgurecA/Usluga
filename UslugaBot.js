@@ -538,7 +538,6 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
       return -1; // Возвращаем -1, чтобы указать на ошибку
     }
     const [hours, minutes] = time.split('.').map(Number);
-    console.log(`Преобразование времени: входное значение = ${time}`);
     return hours * 60 + minutes;
   };
 
@@ -630,7 +629,7 @@ const offerRequests = [
 ];
 
 const sort = sortOffersByTimeAndDescription(offerRequests, '12.00', '16.00', 'Обслуживание серверов и оборудования', '17/10/2024')
-console.log(sort);
+
 
 // Регулярные выражения для валидации данных
 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -1328,13 +1327,6 @@ function handleSearchService(chatId, text, userState, userId) {
             if (offerRequests.length > 0) {
 
               const timeRange = userState.responses.time;
-
-              if (typeof timeRange == 'string') {
-                console.log(`Получено ${typeof timeRange}. Значение: ${timeRange}`);
-              }
-              
-              console.log(`Проверка значения: timeRange = ${timeRange}`);
-              
 
               const [startTime, endTime] = timeRange.split('-');
               console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
