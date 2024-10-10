@@ -618,19 +618,19 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 }
 
 const offerRequests = [
-  { id: 1, date: '15/10/2024', startTime: '14.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
-  { id: 2, date: '14/10/2024', startTime: '13.00', endTime: '17.00', description: 'Настройка ПО и обслуживание' },
-  { id: 3, date: '15/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
-  { id: 4, date: '16/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
-  { id: 5, date: '14/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 6, date: '15/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 7, date: '16/10/2024', startTime: '14.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 8, date: '17/10/2024', startTime: '09.00', endTime: '12.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 9, date: '17/10/2024', startTime: '12.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 1, date: '15/10/2024', startTime: '12.00', endTime: '16.00', description: 'Техническое обслуживание оборудования' },
+  { id: 2, date: '16/10/2024', startTime: '13.00', endTime: '14.00', description: 'Настройка ПО и обслуживание' },
+  { id: 3, date: '17/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание и проверка систем' },
+  { id: 4, date: '17/10/2024', startTime: '14.00', endTime: '15.00', description: 'Проверка состояния оборудования' },
+  { id: 5, date: '17/10/2024', startTime: '09.00', endTime: '20.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 6, date: '17/10/2024', startTime: '13.00', endTime: '15.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 7, date: '17/10/2024', startTime: '15.00', endTime: '17.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 8, date: '17/10/2024', startTime: '11.00', endTime: '13.00', description: 'Обслуживание серверов и оборудования' },
+  { id: 9, date: '17/10/2024', startTime: '12.00', endTime: '16.00', description: 'Обслуживание серверов и оборудования' },
 ];
 
-
-
+const sort = sortOffersByTimeAndDescription(offerRequests, '12.00', '16.00', 'Обслуживание серверов и оборудования', '17/10/2024')
+console.log(sort);
 
 // Регулярные выражения для валидации данных
 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -1313,7 +1313,7 @@ function handleSearchService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
@@ -1576,7 +1576,7 @@ function handleProvideService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.country}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, description, contact, deletion);
