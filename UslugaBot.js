@@ -533,10 +533,6 @@ function sortOffersByTimeAndDescription(offers, startTime, endTime, userDescript
   // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
     // Проверка значения на undefined или пустую строку
-    if (!time || typeof time !== 'string') {
-      console.error(`Некорректный формат времени: ${time}`);
-      return 0; // Возвращаем 0 для некорректного времени
-    }
 
     // Добавляем логирование перед split, чтобы видеть входящее значение
     console.log(`Преобразование времени: входное значение = ${time}`);
@@ -629,7 +625,7 @@ const offerRequests = [
 ];
 
 const sorted = sortOffersByTimeAndDescription(offerRequests, '13.00', '14.00', 'Обслуживание серверов и оборудования', '16/10/2024');
-console.log(sorted);
+
 
 
 // Регулярные выражения для валидации данных
@@ -1594,11 +1590,17 @@ function handleProvideService(chatId, text, userState, userId) {
           
             if (searchRequests.length > 0) {
 
-              const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
+              let startTime;
+              let endTime;
 
+              const timeRange = userState.responses.time.trim(); // Предполагаем, что время выглядит как "14.00-16.00"
+              const match = timeRange.match(/^(\d{2}\.\d{2})-(\d{2}\.\d{2})$/);
+              if (match) {
+                startTime = match[1];
+                endTime = match[2];
               
-              // Разделяем строку на две части
-              const [startTime, endTime] = timeRange.split('-');
+                console.log(`Время после обработки: startTime=${startTime}, endTime=${endTime}`);
+              }
 
               const userDescription = userState.responses.description;
               const userDate = userState.responses.date;
