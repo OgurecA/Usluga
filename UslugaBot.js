@@ -530,31 +530,35 @@ const countryToISO = {
 
 function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
   const moment = require('moment'); // Подключение moment.js для работы с датами
-  console.log('Start of sortOffersByTimeAndDescription');
-  console.log(`Входные данные для sortOffersByTimeAndDescription: startTime=${userStartTime}, endTime=${userEndTime}`);
 
-  const startTime = String(userStartTime);
-  const endTime = String(userEndTime);
-
-  // Преобразование времени из формата "HH:MM" в минуты для удобства сравнения
+  // Преобразование времени из формата "HH.MM" в минуты для удобства сравнения
   const toMinutes = (time) => {
-    console.log(`Преобразование времени: входное значение = ${time}`);
     if (!time) {
-      console.error(`Ошибка: передано некорректное значение времени. Значение: ${time}`);
-      throw new Error(`Некорректное значение времени: ${time}`);
+      console.error('Ошибка: передано некорректное значение времени:', time);
+      return -1; // Возвращаем -1, чтобы указать на ошибку
     }
-  
-    const [hours, minutes] = time.split('.').map(Number); // Ошибка возникает на этой строке
-    console.log(`Преобразовано в: hours=${hours}, minutes=${minutes}`);
+    const [hours, minutes] = time.split('.').map(Number);
+    console.log(`Преобразование времени: входное значение = ${time}`);
     return hours * 60 + minutes;
   };
 
   // Временные метки пользователя
-  const userStart = toMinutes(startTime);
-  const userEnd = toMinutes(endTime);
+  const userStart = toMinutes(userStartTime);
+  const userEnd = toMinutes(userEndTime);
+
+  if (userStart === -1 || userEnd === -1) {
+    console.error('Ошибка: не удалось преобразовать пользовательское время');
+    return [];
+  }
 
   // Преобразуем дату пользователя в объект Moment
   const userMomentDate = moment(userDate, 'DD/MM/YYYY');
+
+  // Функция для извлечения startTime и endTime из формата "14.00-16.00"
+  const extractTimes = (timeRange) => {
+    const [start, end] = timeRange.split('-');
+    return [start.trim(), end.trim()];
+  };
 
   // Функция для определения категории совпадения времени
   const getTimeCategory = (offerStart, offerEnd) => {
@@ -577,18 +581,30 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
 
   // Сортировка предложений по категории даты, времени и описанию
   return offers.sort((a, b) => {
+    // Извлечение startTime и endTime из каждого предложения
+    const [offerStartA, offerEndA] = extractTimes(a.time); // a.time хранит значение в виде "14.00-16.00"
+    const [offerStartB, offerEndB] = extractTimes(b.time);
+
+    // Преобразуем startTime и endTime в минуты для сравнения
+    const offerStartMinutesA = toMinutes(offerStartA);
+    const offerEndMinutesA = toMinutes(offerEndA);
+    const offerStartMinutesB = toMinutes(offerStartB);
+    const offerEndMinutesB = toMinutes(offerEndB);
+
+    if (offerStartMinutesA === -1 || offerEndMinutesA === -1 || offerStartMinutesB === -1 || offerEndMinutesB === -1) {
+      console.error('Ошибка: не удалось преобразовать время предложения.');
+      return 0; // Возвращаем 0, чтобы не нарушать сортировку
+    }
+
     // Сравнение по дате
     const dateDiffA = getDateDifference(a.date); // Разница даты предложения "a" с пользователем
     const dateDiffB = getDateDifference(b.date); // Разница даты предложения "b" с пользователем
 
     if (dateDiffA !== dateDiffB) return dateDiffA - dateDiffB; // Чем меньше разница, тем выше позиция
 
-    // Преобразуем время в минуты для сравнения
-
-
     // Определяем категории совпадения времени
-    const categoryA = getTimeCategory(offerStartA, offerEndA);
-    const categoryB = getTimeCategory(offerStartB, offerEndB);
+    const categoryA = getTimeCategory(offerStartMinutesA, offerEndMinutesA);
+    const categoryB = getTimeCategory(offerStartMinutesB, offerEndMinutesB);
 
     // Сравниваем по категории совпадения времени
     if (categoryA !== categoryB) return categoryA - categoryB;
