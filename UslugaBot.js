@@ -1546,6 +1546,11 @@ function handleProvideService(chatId, text, userState, userId) {
 
               const timeRange = userState.responses.time; // Предполагаем, что время выглядит как "14.00-16.00"
 
+              if (!timeRange || typeof timeRange !== 'string' || !timeRange.includes('-')) {
+                sendAndTrackMessage(chatId, 'Ошибка: некорректное значение времени. Пожалуйста, укажите время в формате "14.00-16.00".');
+                break;
+              }
+              
               console.log('Time range:', timeRange);
 
               // Разделяем строку на две части
