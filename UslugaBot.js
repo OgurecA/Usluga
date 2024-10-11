@@ -1616,9 +1616,9 @@ async function handleProvideService(chatId, text, userState, userId) {
               
               const limitedSearches = sortedSearches.slice(0, 20);
 
-              async function sendSortedOffers(chatId, sortedOffers) {
-                for (let index = 0; index < sortedOffers.length; index++) {
-                  const offer = sortedOffers[index];
+              async function sendSortedOffers(chatId, sortedSearches) {
+                for (let index = 0; index < sortedSearches.length; index++) {
+                  const offer = sortedSearches[index];
                   
                   // Формируем сообщение для предложения
                   const offerMessage = `📋 *Предложение*\n\n` +
@@ -1641,7 +1641,7 @@ async function handleProvideService(chatId, text, userState, userId) {
               }    
             
               if (limitedSearches.length > 0) {
-                await sendSortedOffers(chatId, limitedOffers);               
+                await sendSortedOffers(chatId, limitedSearches);               
               }
             } else {
               // Сообщение в случае отсутствия предложений по стране
