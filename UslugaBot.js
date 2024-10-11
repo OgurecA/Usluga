@@ -1322,8 +1322,23 @@ async function handleSearchService(chatId, text, userState, userId) {
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
       
       const creation_date = db.getUserDate(userId);
+      console.log(`
+        id: ${id},
+        country: ${country},
+        city: ${city},
+        date: ${date},
+        time: ${time},
+        amount: ${amount},
+        keywords: ${keywords},
+        description: ${description},
+        contact: ${contact},
+        deletion: ${deletion},
+        creation_date: ${creation_date}
+      `);
+      setTimeout(async () => {
       db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
       db.addSearchRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
+      }, 1000);
       
       async function processSearchResults(chatId, userState) {
       
@@ -1701,9 +1716,6 @@ function findClosestCountry(input) {
   return highestScore > 0.7 ? bestMatch : null;
 }
 
-function generateRandomId() {
-  return Math.floor(1000000000 + Math.random() * 9000000000).toString(); // Генерируем случайное 10-значное число
-}
 
 // Запуск бота
 console.log("Бот запущен и готов к работе...");
