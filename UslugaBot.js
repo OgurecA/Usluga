@@ -1323,7 +1323,9 @@ async function handleSearchService(chatId, text, userState, userId) {
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
       
-      sendAndTrackResultMessage(chatId, searchSummary);
+      async function processSearchResults(chatId, userState) {
+      
+        await sendAndTrackResultMessage(chatId, searchSummary);
 
             const isAnyCity = userState.responses.city === "Любой город";
             const offerRequests = isAnyCity 
@@ -1382,7 +1384,9 @@ async function handleSearchService(chatId, text, userState, userId) {
           
             deleteAllTrackedMessages(chatId);
             delete states[chatId];
-            break;
+          }
+          await processSearchResults(chatId, userState);
+            break; 
   }
 }
 
