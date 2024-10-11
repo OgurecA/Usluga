@@ -638,10 +638,10 @@ const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
-  const currentDate = moment().format('DD-MM-YYYY');
+  const currentDate = moment().format('DD/MM/YYYY');
 
   db.addUser(userId, currentDate);
-  
+
   deleteAllTrackedResultMessages(chatId);
   await deleteTrackedStartMessages(chatId);  // Удаление старых сообщений перед новым стартом
   trackStart(chatId, msg.message_id);
@@ -1318,9 +1318,15 @@ async function handleSearchService(chatId, text, userState, userId) {
       
       const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nКлючевые слова: ${userState.responses.keywords}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
+
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
-      db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
-      db.addSearchRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
+      
+      db.getUserDate(userId).then((creation_date) => {
+        db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
+        db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
+      }).catch((err) => {
+        console.error('Ошибка получения даты пользователя:', err);
+      });
       
       async function processSearchResults(chatId, userState) {
       
@@ -1350,7 +1356,8 @@ async function handleSearchService(chatId, text, userState, userId) {
                   const offer = sortedOffers[index];
                   
                   // Формируем сообщение для предложения
-                  const offerMessage = `📋 *Предложение*\n\n` +
+                  const offerMessage = `📋 *Предложение*\n` +
+                                       `${offer.id}\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
                                        `Дата: ${offer.date}\n` +
@@ -1359,7 +1366,8 @@ async function handleSearchService(chatId, text, userState, userId) {
                                        `Ключевые слова: ${offer.keywords}\n` +
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
-                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.\n` +
+                                       `Дата создания аккаунта: ${offer.creation_date}`;
               
                   // Отправляем сообщение с задержкой между каждым следующим
                   await sendAndTrackResultMessage(chatId, offerMessage); 
@@ -1596,8 +1604,14 @@ async function handleProvideService(chatId, text, userState, userId) {
       const searchSummary = `Вы успешно составили заявку на предоставление услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nКлючевые слова: ${userState.responses.keywords}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
-      db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
-      db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
+
+      db.getUserDate(userId).then((creation_date) => {
+        db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
+        db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
+      }).catch((err) => {
+        console.error('Ошибка получения даты пользователя:', err);
+      });
+      
       
       sendAndTrackResultMessage(chatId, searchSummary);
 
@@ -1625,7 +1639,8 @@ async function handleProvideService(chatId, text, userState, userId) {
                   const offer = sortedSearches[index];
                   
                   // Формируем сообщение для предложения
-                  const offerMessage = `📋 *Предложение*\n\n` +
+                  const offerMessage = `📋 *Предложение*\n` +
+                                       `${offer.id}\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
                                        `Дата: ${offer.date}\n` +
@@ -1634,7 +1649,8 @@ async function handleProvideService(chatId, text, userState, userId) {
                                        `Ключевые слова: ${offer.keywords}\n` +
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
-                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;
+                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.\n` +
+                                       `Дата создания аккаунта: ${offer.creation_date}`;
               
                   // Отправляем сообщение с задержкой между каждым следующим
                   await sendAndTrackResultMessage(chatId, offerMessage); 

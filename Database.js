@@ -17,7 +17,8 @@ CREATE TABLE IF NOT EXISTS search (
   keywords TEXT NOT NULL,
   description TEXT NOT NULL,
   contact TEXT NOT NULL,
-  deletion TEXT NOT NULL
+  deletion TEXT NOT NULL,
+  creation_date TEXT NOT NULL
 )`).run();
 
 db.prepare(`
@@ -45,7 +46,8 @@ CREATE TABLE IF NOT EXISTS offer (
   amount TEXT NOT NULL,
   keywords TEXT NOT NULL,
   description TEXT NOT NULL,
-  contact TEXT NOT NULL
+  contact TEXT NOT NULL,
+  creation_date TEXT NOT NULL
 )`).run();
 
 db.prepare(`
@@ -64,7 +66,8 @@ db.prepare(`
   db.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY,
-      date TEXT NOT NULL
+      date TEXT NOT NULL,
+      verified BOOLEAN DEFAULT 0
     )`).run();
 
 // Функция для удаления устаревших записей
@@ -107,12 +110,12 @@ const deleteOfferRequest = (userId, country, city, date, time, amount, descripti
 // Функции работы с базой данных
 module.exports = {
   // Пример функции для добавления заявки в таблицу search
-  addSearchRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion) => {
+  addSearchRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date) => {
     const insert = db.prepare(`
-      INSERT INTO search (id, country, city, date, time, amount, keywords, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO search (id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
   },
   addSearchRequestLogs: (id, country, city, date, time, amount, keywords, description, contact) => {
     const insert = db.prepare(`
@@ -123,12 +126,12 @@ module.exports = {
   },
 
   // Пример функции для добавления заявки в таблицу offer
-  addOfferRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion) => {
+  addOfferRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date) => {
     const insert = db.prepare(`
-      INSERT INTO offer (id, country, city, date, time, amount, keywords, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO offer (id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
   },
   addOfferRequestLogs: (id, country, city, date, time, amount, keywords, description, contact) => {
     const insert = db.prepare(`
@@ -178,7 +181,11 @@ module.exports = {
       VALUES (?, ?)
     `);
     insert.run(id, date);
-  },  
+  },
+  getUserDate: (id) => {
+    const query = db.prepare("SELECT date FROM users WHERE id = ?");
+    return query.get(id);
+  },
 
   removeExpiredRequests: removeExpiredRequests,
 
