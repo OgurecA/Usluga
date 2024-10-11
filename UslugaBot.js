@@ -1323,7 +1323,7 @@ async function handleSearchService(chatId, text, userState, userId) {
       
       const creation_date = db.getUserDate(userId);
       console.log(`
-        id: ${id},
+        id: ${userId},
         country: ${country},
         city: ${city},
         date: ${date},
