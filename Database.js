@@ -31,8 +31,7 @@ db.prepare(`
     amount TEXT NOT NULL,
     keywords TEXT NOT NULL,
     description TEXT NOT NULL,
-    contact TEXT NOT NULL,
-    deletion TEXT NOT NULL
+    contact TEXT NOT NULL
   )`).run();
 
 // Создание таблицы "offer" для хранения предложений услуг
