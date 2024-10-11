@@ -1321,12 +1321,9 @@ async function handleSearchService(chatId, text, userState, userId) {
 
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
       
-      db.getUserDate(userId).then((creation_date) => {
-        db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
-        db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
-      }).catch((err) => {
-        console.error('Ошибка получения даты пользователя:', err);
-      });
+      const creation_date = db.getUserDate(userId);
+      db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
+      db.addSearchRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
       
       async function processSearchResults(chatId, userState) {
       
@@ -1605,12 +1602,9 @@ async function handleProvideService(chatId, text, userState, userId) {
       
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
 
-      db.getUserDate(userId).then((creation_date) => {
-        db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
-        db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
-      }).catch((err) => {
-        console.error('Ошибка получения даты пользователя:', err);
-      });
+      const creation_date = db.getUserDate(userId);
+      db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion, creation_date);
+      db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
       
       
       sendAndTrackResultMessage(chatId, searchSummary);
