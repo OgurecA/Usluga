@@ -528,7 +528,7 @@ const countryToISO = {
   'Zimbabwe': 'zw'
 };
 
-function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userDescription, userDate) {
+function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, userKeywords, userDate) {
   const moment = require('moment'); // Подключение moment.js для работы с датами
 
   // Преобразование времени из формата "HH.MM" в минуты для удобства сравнения
@@ -568,8 +568,8 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   };
 
   // Функция для расчета сходства описания с пользовательским описанием
-  const getDescriptionSimilarity = (offerDescription, userDescription) => {
-    return stringSimilarity.compareTwoStrings(offerDescription.toLowerCase(), userDescription.toLowerCase());
+  const getDescriptionSimilarity = (offerKeywords, userKeywords) => {
+    return stringSimilarity.compareTwoStrings(offerKeywords.toLowerCase(), userKeywords.toLowerCase());
   };
 
   // Функция для расчета разницы в датах (в днях)
@@ -609,8 +609,8 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
     if (categoryA !== categoryB) return categoryA - categoryB;
 
     // Внутри одной категории времени сортируем по степени схожести описания
-    const similarityA = getDescriptionSimilarity(a.description, userDescription);
-    const similarityB = getDescriptionSimilarity(b.description, userDescription);
+    const similarityA = getDescriptionSimilarity(a.keywords, userKeywords);
+    const similarityB = getDescriptionSimilarity(b.keywords, userKeywords);
 
     return similarityB - similarityA; // Чем больше схожесть, тем выше позиция
   });
@@ -621,11 +621,6 @@ const offerRequests = [
   { id: 2, date: '16/10/2024', time: '13.00-14.00', description: 'Настройка ПО и обслуживание' },
   { id: 3, date: '17/10/2024', time: '15.00-17.00', description: 'Обслуживание и проверка систем' },
   { id: 4, date: '17/10/2024', time: '14.00-15.00', description: 'Проверка состояния оборудования' },
-  { id: 5, date: '17/10/2024', time: '09.00-20.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 6, date: '17/10/2024', time: '13.00-15.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 7, date: '17/10/2024', time: '15.00-17.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 8, date: '17/10/2024', time: '11.00-13.00', description: 'Обслуживание серверов и оборудования' },
-  { id: 9, date: '17/10/2024', time: '12.00-16.00', description: 'Обслуживание серверов и оборудования' },
 ];
 
 const sort = sortOffersByTimeAndDescription(offerRequests, '12.00', '16.00', 'Обслуживание серверов и оборудования', '17/10/2024')
@@ -1339,10 +1334,10 @@ async function handleSearchService(chatId, text, userState, userId) {
               const [startTime, endTime] = timeRange.split('-');
               console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
 
-              const userDescription = userState.responses.keywords;
+              const userKeywords = userState.responses.keywords;
               const userDate = userState.responses.date;
               
-              const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription, userDate); 
+              const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userKeywords, userDate); 
               
               const limitedOffers = sortedOffers.slice(0, 20);
               
@@ -1613,10 +1608,10 @@ async function handleProvideService(chatId, text, userState, userId) {
               // Разделяем строку на две части
               const [startTime, endTime] = timeRange.split('-');
 
-              const userDescription = userState.responses.keywords;
+              const userKeywords = userState.responses.keywords;
               const userDate = userState.responses.date;
               
-              const sortedSearches = sortOffersByTimeAndDescription(searchRequests, startTime, endTime, userDescription, userDate); 
+              const sortedSearches = sortOffersByTimeAndDescription(searchRequests, startTime, endTime, userKeywords, userDate); 
               
               const limitedSearches = sortedSearches.slice(0, 20);
 
