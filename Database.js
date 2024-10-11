@@ -63,7 +63,7 @@ db.prepare(`
 
   db.prepare(`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER,
+      id INTEGER PRIMARY KEY,
       date TEXT NOT NULL
     )`).run();
 
