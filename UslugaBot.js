@@ -1291,16 +1291,22 @@ async function handleSearchService(chatId, text, userState, userId) {
         // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
         userState.responses.timer = text;
         userState.step = 'search_7';
-        sendAndTrackMessage(chatId, 'Опишите, какую услугу вы ищете:');
+        sendAndTrackMessage(chatId, 'Напишете ключевые слова по которым можно было бы определить, какую услугу вы ищете (мы рекомендуем использовать несколько слов, которые могут точно описать услугу, например (учитель, репетитор, математика)):');
         break;
 
     case 'search_7':
-      userState.responses.description = text;
+      userState.responses.keywords = text;
       userState.step = 'search_8';
-      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
+      sendAndTrackMessage(chatId, 'Дайте описание услуги, которую вы предоставляете:');
       break;
 
     case 'search_8':
+      userState.responses.description = text;
+      userState.step = 'search_9';
+      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
+      break;
+
+    case 'search_9':
       userState.responses.contact = text;
 
       const currentDateTime = new Date();
@@ -1312,10 +1318,10 @@ async function handleSearchService(chatId, text, userState, userId) {
       const deletion = `${deletionDate.getFullYear()}-${(deletionDate.getMonth() + 1).toString().padStart(2, '0')}-${deletionDate.getDate().toString().padStart(2, '0')} ${deletionDate.getHours().toString().padStart(2, '0')}:${deletionDate.getMinutes().toString().padStart(2, '0')}`;
 
       
-      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
+      const searchSummary = `Вы успешно составили заявку на поиск услуги!\n\nСтрана: ${userState.responses.answercountry}\nГород: ${userState.responses.city}\nДата: ${userState.responses.date}\nВремя: ${userState.responses.time}\nСумма: ${userState.responses.amount}\nКлючевые слова: ${userState.responses.keywords}\nОписание: ${userState.responses.description}\nContact: ${userState.responses.contact}`;
       
-      const { country, city, date, time, amount, description, contact } = userState.responses;
-      db.addSearchRequest(userId, country, city, date, time, amount, description, contact, deletion);
+      const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
+      db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
       
       sendAndTrackResultMessage(chatId, searchSummary);
 
@@ -1331,7 +1337,7 @@ async function handleSearchService(chatId, text, userState, userId) {
               const [startTime, endTime] = timeRange.split('-');
               console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
 
-              const userDescription = userState.responses.description;
+              const userDescription = userState.responses.keywords;
               const userDate = userState.responses.date;
               
               const sortedOffers = sortOffersByTimeAndDescription(offerRequests, startTime, endTime, userDescription, userDate); 
@@ -1349,6 +1355,7 @@ async function handleSearchService(chatId, text, userState, userId) {
                                        `Дата: ${offer.date}\n` +
                                        `Время: ${offer.time}\n` +
                                        `Сумма: ${offer.amount}\n` +
+                                       `Ключевые слова: ${offer.keywords}\n` +
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
                                        `Свяжитесь с предоставителем услуги, чтобы обсудить детали.`;

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS search (
   date TEXT NOT NULL,
   time TEXT NOT NULL,
   amount TEXT NOT NULL,
+  keywords TEXT NOT NULL,
   description TEXT NOT NULL,
   contact TEXT NOT NULL,
   deletion TEXT NOT NULL
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS offer (
   date TEXT NOT NULL,
   time TEXT NOT NULL,
   amount TEXT NOT NULL,
+  keywords TEXT NOT NULL,
   description TEXT NOT NULL,
   contact TEXT NOT NULL,
   deletion TEXT NOT NULL
@@ -73,21 +75,21 @@ const deleteOfferRequest = (userId, country, city, date, time, amount, descripti
 // Функции работы с базой данных
 module.exports = {
   // Пример функции для добавления заявки в таблицу search
-  addSearchRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
+  addSearchRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion) => {
     const insert = db.prepare(`
-      INSERT INTO search (id, country, city, date, time, amount, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO search (id, country, city, date, time, amount, keywords, description, contact, deletion)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, description, contact, deletion);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
   },
 
   // Пример функции для добавления заявки в таблицу offer
-  addOfferRequest: (id, country, city, date, time, amount, description, contact, deletion) => {
+  addOfferRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion) => {
     const insert = db.prepare(`
-      INSERT INTO offer (id, country, city, date, time, amount, description, contact, deletion)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO offer (id, country, city, date, time, amount, keywords, description, contact, deletion)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    insert.run(id, country, city, date, time, amount, description, contact, deletion);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
   },
 
   getSearchRequestsByUser: (id) => {
