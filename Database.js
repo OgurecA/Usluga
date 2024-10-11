@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS offer (
   keywords TEXT NOT NULL,
   description TEXT NOT NULL,
   contact TEXT NOT NULL,
+  deletion TEXT NOT NULL,
   creation_date TEXT NOT NULL
 )`).run();
 
