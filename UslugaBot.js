@@ -637,8 +637,11 @@ const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
 // Обработчик команды /start
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  const userId = msg.from.id; 
+  const userId = msg.from.id;
+  const currentDate = moment().format('DD-MM-YYYY');
 
+  db.addUser(userId, currentDate);
+  
   deleteAllTrackedResultMessages(chatId);
   await deleteTrackedStartMessages(chatId);  // Удаление старых сообщений перед новым стартом
   trackStart(chatId, msg.message_id);
@@ -1317,6 +1320,7 @@ async function handleSearchService(chatId, text, userState, userId) {
       
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
       db.addSearchRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
+      db.addSearchRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
       
       async function processSearchResults(chatId, userState) {
       
@@ -1593,6 +1597,7 @@ async function handleProvideService(chatId, text, userState, userId) {
       
       const { country, city, date, time, amount, keywords, description, contact } = userState.responses;
       db.addOfferRequest(userId, country, city, date, time, amount, keywords, description, contact, deletion);
+      db.addOfferRequestLogs(userId, country, city, date, time, amount, keywords, description, contact);
       
       sendAndTrackResultMessage(chatId, searchSummary);
 

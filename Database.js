@@ -20,6 +20,20 @@ CREATE TABLE IF NOT EXISTS search (
   deletion TEXT NOT NULL
 )`).run();
 
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS search_logs (
+    id INTEGER,
+    country TEXT NOT NULL,
+    city TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    amount TEXT NOT NULL,
+    keywords TEXT NOT NULL,
+    description TEXT NOT NULL,
+    contact TEXT NOT NULL,
+    deletion TEXT NOT NULL
+  )`).run();
+
 // Создание таблицы "offer" для хранения предложений услуг
 db.prepare(`
 CREATE TABLE IF NOT EXISTS offer (
@@ -31,9 +45,27 @@ CREATE TABLE IF NOT EXISTS offer (
   amount TEXT NOT NULL,
   keywords TEXT NOT NULL,
   description TEXT NOT NULL,
-  contact TEXT NOT NULL,
-  deletion TEXT NOT NULL
+  contact TEXT NOT NULL
 )`).run();
+
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS offer_logs (
+    id INTEGER,
+    country TEXT NOT NULL,
+    city TEXT NOT NULL,
+    date TEXT NOT NULL,
+    time TEXT NOT NULL,
+    amount TEXT NOT NULL,
+    keywords TEXT NOT NULL,
+    description TEXT NOT NULL,
+    contact TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER,
+      date TEXT NOT NULL
+    )`).run();
 
 // Функция для удаления устаревших записей
 function removeExpiredRequests() {
@@ -82,6 +114,13 @@ module.exports = {
     `);
     insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
   },
+  addSearchRequestLogs: (id, country, city, date, time, amount, keywords, description, contact) => {
+    const insert = db.prepare(`
+      INSERT INTO search_logs (id, country, city, date, time, amount, keywords, description, contact)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact);
+  },
 
   // Пример функции для добавления заявки в таблицу offer
   addOfferRequest: (id, country, city, date, time, amount, keywords, description, contact, deletion) => {
@@ -90,6 +129,13 @@ module.exports = {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     insert.run(id, country, city, date, time, amount, keywords, description, contact, deletion);
+  },
+  addOfferRequestLogs: (id, country, city, date, time, amount, keywords, description, contact) => {
+    const insert = db.prepare(`
+      INSERT INTO offer_logs (id, country, city, date, time, amount, keywords, description, contact)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    insert.run(id, country, city, date, time, amount, keywords, description, contact);
   },
 
   getSearchRequestsByUser: (id) => {
@@ -125,7 +171,14 @@ module.exports = {
     const query = db.prepare("SELECT * FROM search WHERE country = ? AND (city = ? OR city = 'Любой город')");
     return query.all(country, city);
   },
-  
+
+  addUser: (id, date) => {
+    const insert = db.prepare(`
+      INSERT OR IGNORE INTO users (id, date)
+      VALUES (?, ?)
+    `);
+    insert.run(id, date);
+  },  
 
   removeExpiredRequests: removeExpiredRequests,
 
