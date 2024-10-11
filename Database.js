@@ -184,8 +184,11 @@ module.exports = {
   },
   getUserDate: (id) => {
     const query = db.prepare("SELECT date FROM users WHERE id = ?");
-    return query.get(id);
+    const result = query.get(id);
+    // Проверка результата и извлечение значения даты
+    return result ? result.date : null; // Вернем только значение даты или `null`, если пользователя нет
   },
+  
 
   removeExpiredRequests: removeExpiredRequests,
 
