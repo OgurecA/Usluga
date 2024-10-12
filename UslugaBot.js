@@ -775,12 +775,12 @@ async function checkCityName(cityName, countryCode) {
 }
 
 let transporter = nodemailer.createTransport({
-  host: 'smtp.dominators.website', // замените на адрес SMTP-сервера вашего хостинг-провайдера
-  port: 587, // используйте 587 для STARTTLS, или 465 для SSL
-  secure: false, // для 587 false, для 465 true
+  host: 'smtp.dominators.website', // Ваш SMTP сервер
+  port: 587, // Порт 587 для STARTTLS
+  secure: false, // false для 587, true для 465 (SSL)
   auth: {
-    user: 'contact@dominators.website', // ваш email на вашем домене
-    pass: 'V8polgop' // ваш пароль для почтового ящика на домене
+    user: 'contact@dominators.website', // Ваша почта на домене
+    pass: 'V8polgop' // Пароль от почтового ящика
   }
 });
 
