@@ -666,6 +666,7 @@ bot.onText(/\/start/, async (msg) => {
       keyboard: [
         [{ text: 'Ищу услугу' }, { text: 'Предоставляю услугу' }],
         [{ text: 'Мои заявки' }, { text: '/help' }],
+        [{ text: 'Наябедничать'}]
       ],
       resize_keyboard: true,
       one_time_keyboard: false,
@@ -954,6 +955,23 @@ bot.on('message', (msg) => {
       states[chatId] = { step: 'provide_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
     }
+  } else if (text === 'Наябедничать') {
+    deleteAllTrackedMessages(chatId);
+    sendAndTrackMessage(chatId, 'Напишите репепорт и номер неугодной услуги');
+
+    bot.once('message', async (msg) => {
+      const userMessage = msg.text; // Получаем текст сообщения пользователя
+      const userChatId = msg.chat.id; // Получаем ID чата пользователя
+  
+      // Фиксируем сообщение пользователя
+      sendAndTrackMessage(userChatId, `Ваш репорт: ${userMessage}`);
+  
+      // Таймер на 5 секунд для удаления сообщений
+      setTimeout(() => {
+        deleteAllTrackedMessages(userChatId);
+      }, 5000); // 5000 миллисекунд = 5 секунд
+    });
+
   } else if (text === 'Мои заявки') {
 
     deleteAllTrackedListMessages(chatId);
