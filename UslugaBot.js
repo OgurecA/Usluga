@@ -945,17 +945,18 @@ bot.on('message', (msg) => {
     }
   } else if (text === 'Сообщить') {
     deleteAllTrackedMessages(chatId);
-    sendAndTrackMessage(chatId, 'Опишите возникшую ситуацию и номер услуги с кототрой она возникла.');
-
+    
     if (states[chatId]) {
       delete states[chatId]; // Удаляем состояние пользователя из хранилища
       setTimeout(() => {
         deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
       }, 500); 
-    }
+    };
+
     setTimeout(() => {
-      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
-    }, 500); 
+      sendAndTrackMessage(chatId, 'Опишите возникшую ситуацию и номер услуги с кототрой она возникла.');
+    }, 1000); 
+
 
     bot.once('message', (msg) => {
       const userMessage = msg.text; // Получаем текст сообщения пользователя
