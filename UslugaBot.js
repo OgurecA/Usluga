@@ -1399,7 +1399,7 @@ async function handleSearchService(chatId, text, userState, userId) {
                   const offer = sortedOffers[index];
                   
                   // Формируем сообщение для предложения
-                  const offerMessage = `**Предложение**\n` +
+                  const offerMessage = `*Предоставляю услугу*\n` +
                                        `ID:${offer.id}\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
@@ -1680,7 +1680,7 @@ async function handleProvideService(chatId, text, userState, userId) {
                   const offer = sortedSearches[index];
                   
                   // Формируем сообщение для предложения
-                  const offerMessage = `**Предложение**\n` +
+                  const offerMessage = `*Ищу услугу*\n` +
                                        `ID:${offer.id}\n\n` +
                                        `Страна: ${offer.country}\n` +
                                        `Город: ${offer.city}\n` +
