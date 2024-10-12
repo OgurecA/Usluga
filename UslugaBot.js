@@ -774,8 +774,6 @@ async function checkCityName(cityName, countryCode) {
   }
 }
 
-const nodemailer = require('nodemailer');
-
 let transporter = nodemailer.createTransport({
   host: 'mail.tutanota.com',
   port: 465, // Для SSL используйте порт 465
