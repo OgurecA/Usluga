@@ -776,8 +776,8 @@ async function checkCityName(cityName, countryCode) {
 
 let transporter = nodemailer.createTransport({
   host: 'smtp.dominators.website',
-  port: 465, // Используйте порт 465 для SSL
-  secure: true, // true для SSL
+  port: 587,
+  secure: false, // Используем STARTTLS
   auth: {
     user: 'contact@dominators.website',
     pass: 'V8polgop'
