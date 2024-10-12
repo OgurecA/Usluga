@@ -950,7 +950,7 @@ bot.on('message', (msg) => {
       deleteAllTrackedResultMessages(chatId);
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
-      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите найти услугу. Например: (Россия, Китай, Франция)');
+      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите найти услугу. Например: (Россия, Китай, Франция). В случае, если вас не устраивает как заполнено поле в заявке, вы всегда можете начать ее заполнение заново нажав или написав "Ищу услугу"');
     }
   } else if (text === 'Предоставляю услугу') {
     const userOfferRequests = db.getOfferRequestsByUser(userId);
@@ -965,7 +965,7 @@ bot.on('message', (msg) => {
       deleteAllTrackedMessages(chatId);
       deleteAllTrackedResultMessages(chatId);
       states[chatId] = { step: 'provide_1', responses: {} };
-      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите предоставить услугу. Например: (Россия, Германия, Италия)');
+      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите предоставить услугу. Например: (Россия, Германия, Италия). В случае, если вас не устраивает как заполнено поле в заявке, вы всегда можете начать ее заполнение заново нажав или написав "Предоставляю услугу"');
     }
   } else if (text === 'Сообщить') {
     deleteAllTrackedMessages(chatId);
