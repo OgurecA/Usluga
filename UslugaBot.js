@@ -776,18 +776,16 @@ async function checkCityName(cityName, countryCode) {
 
 let transporter = nodemailer.createTransport({
   host: 'smtp.dominators.website',
-  port: 587,
-  secure: false, // Используем STARTTLS
+  port: 587, // Используйте порт 587 для STARTTLS
+  secure: false, // Указываем false, чтобы использовать STARTTLS, а не SSL
   auth: {
     user: 'contact@dominators.website',
-    pass: 'V8polgop'
+    pass: 'V8polgop' // Ваш пароль
   },
   tls: {
-    rejectUnauthorized: false // Отключаем проверку сертификата
+    rejectUnauthorized: false // Игнорируем ошибки самоподписанных сертификатов
   }
 });
-
-
 
 function sendEmail(subject, message) {
   let mailOptions = {
@@ -807,6 +805,7 @@ function sendEmail(subject, message) {
     }
   });
 }
+
 
 
 
