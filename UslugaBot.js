@@ -692,6 +692,18 @@ bot.onText(/\/help/, async (msg) => {
 
   // Сообщение помощи с кратким описанием команд
   const helpMessage = `
+Пример правильно составленной заявки:
+
+Страна: Россия
+Город: Москва
+Дата: 16/11/2024
+Время: 12.00-16.00
+Срок заявки: 10
+Сумма и способ оплаты: 500 рублей, наличные или банковский перевод
+Ключевые слова: гулять, собака
+Описание: Выгулять щенка немецкой овчарки.
+Контакт: пример@почты.com
+
 *Доступные команды бота:*
 
 1. \`/start\` — Начало работы с ботом, регистрация аккаунта.
@@ -950,12 +962,12 @@ bot.on('message', (msg) => {
       delete states[chatId]; // Удаляем состояние пользователя из хранилища
       setTimeout(() => {
         deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
-      }, 500); 
+      }, 200); 
     };
 
     setTimeout(() => {
       sendAndTrackMessage(chatId, 'Опишите возникшую ситуацию и номер услуги с кототрой она возникла.');
-    }, 1000); 
+    }, 700); 
 
 
     bot.once('message', (msg) => {
@@ -1193,7 +1205,6 @@ async function handleSearchService(chatId, text, userState, userId) {
       }
         break;
 
-
     case 'search_3':
   if (!dateRegex.test(text)) {
     sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате DD/MM/YYYY (например, 01/10/2023).');
@@ -1231,7 +1242,6 @@ async function handleSearchService(chatId, text, userState, userId) {
     }
   }
   break;
-
 
   case 'search_4':
     // Проверка формата времени
