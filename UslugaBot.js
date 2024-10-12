@@ -779,8 +779,8 @@ let transporter = nodemailer.createTransport({
   port: 465, // Для SSL используйте порт 465
   secure: true, // Устанавливаем true для использования SSL
   auth: {
-    user: 'acp044@tutamail.com', // Ваш email на Tutamail
-    pass: 'V8polgop!' // Ваш пароль от Tutamail
+    user: 'a.com', // Ваш email на Tutamail
+    pass: '!' // Ваш пароль от Tutamail
   }
 });
 
@@ -788,8 +788,8 @@ function sendEmail(subject, message) {
   console.log("Начало отправки письма...");
 
   let mailOptions = {
-    from: 'acp044@tutamail.com', // Ваш email
-    to: 'acpwork044@gmail.com', // Email получателя
+    from: 'mail.com', // Ваш email
+    to: '@gmail.com', // Email получателя
     subject: subject, // Тема письма
     text: message // Текст письма
   };
