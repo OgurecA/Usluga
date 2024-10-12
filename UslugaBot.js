@@ -5,6 +5,7 @@ const db = require('./Database.js');
 const axios = require('axios');
 const moment = require('moment-timezone');
 const stringSimilarity = require('string-similarity');
+const nodemailer = require('nodemailer');
 
 
 // Настройка токена и создание экземпляра бота
@@ -773,6 +774,30 @@ async function checkCityName(cityName, countryCode) {
   }
 }
 
+let transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'acpwork044@gmail.com', // Ваш email
+    pass: 'V8polgop'   // Пароль или специальный app-password
+  }
+});
+
+function sendEmail(subject, message) {
+  let mailOptions = {
+    from: 'acpwork044@gmail.com', // Ваш email
+    to: 'acpwork044@gmail.com', // Email получателя
+    subject: subject, // Тема письма
+    text: message // Текст письма
+  };
+
+  transporter.sendMail(mailOptions, function(error, info) {
+    if (error) {
+      console.log('Ошибка при отправке письма: ', error);
+    } else {
+      console.log('Письмо успешно отправлено: ' + info.response);
+    }
+  });
+}
 
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
@@ -965,6 +990,11 @@ bot.on('message', (msg) => {
   
       // Фиксируем сообщение пользователя
       sendAndTrackMessage(userChatId, `Ваш репорт: ${userMessage}`);
+
+      const subject = `Новый репорт от пользователя ${userChatId}`;
+      const message = `Пользователь отправил репорт: ${userMessage}`;
+
+      sendEmail(subject, message);
   
       // Таймер на 5 секунд для удаления сообщений
       setTimeout(() => {
