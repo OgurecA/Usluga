@@ -775,16 +775,19 @@ async function checkCityName(cityName, countryCode) {
 }
 
 let transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.dominators.website', // замените на адрес SMTP-сервера вашего хостинг-провайдера
+  port: 587, // используйте 587 для STARTTLS, или 465 для SSL
+  secure: false, // для 587 false, для 465 true
   auth: {
-    user: 'acpwork044@gmail.com', // Ваш email
-    pass: 'V8polgop'   // Пароль или специальный app-password
+    user: 'contact@dominators.website', // ваш email на вашем домене
+    pass: 'V8polgop' // ваш пароль для почтового ящика на домене
   }
 });
 
+
 function sendEmail(subject, message) {
   let mailOptions = {
-    from: 'acpwork044@gmail.com', // Ваш email
+    from: 'contact@dominators.website', // Ваш email
     to: 'acpwork044@gmail.com', // Email получателя
     subject: subject, // Тема письма
     text: message // Текст письма
