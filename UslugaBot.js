@@ -785,6 +785,8 @@ let transporter = nodemailer.createTransport({
 });
 
 function sendEmail(subject, message) {
+  console.log("Начало отправки письма...");
+
   let mailOptions = {
     from: 'acp044@tutamail.com', // Ваш email
     to: 'acpwork044@gmail.com', // Email получателя
@@ -801,6 +803,8 @@ function sendEmail(subject, message) {
       console.log('Письмо успешно отправлено: ' + info.response);
     }
   });
+
+  console.log("Функция sendMail вызвана");
 }
 
 
