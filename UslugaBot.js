@@ -808,9 +808,6 @@ function sendEmail(subject, message) {
 }
 
 
-sendEmail('Тестовая тема', 'Это тестовое сообщение через Nodemailer с Tutamail.');
-
-
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
 const startMessagesToDelete = {};
@@ -1003,10 +1000,9 @@ bot.on('message', (msg) => {
       // Фиксируем сообщение пользователя
       sendAndTrackMessage(userChatId, `Ваш репорт: ${userMessage}`);
 
-      const subject = `Новый репорт от пользователя ${userChatId}`;
-      const message = `Пользователь отправил репорт: ${userMessage}`;
+      const message = `Новый репорт от пользователя ${userChatId}\nПользователь отправил репорт: ${userMessage}`;
 
-      sendEmail(subject, message);
+      bot.sendMessage(1540626324, message)
   
       // Таймер на 5 секунд для удаления сообщений
       setTimeout(() => {
