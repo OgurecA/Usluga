@@ -692,7 +692,7 @@ bot.onText(/\/help/, async (msg) => {
 
   // Сообщение помощи с кратким описанием команд
   const helpMessage = `
-Пример варианта правильно составленных заявок:
+*Пример вариантов правильно составленных заявок:*
 
 Страна: Россия
 Город: Москва
@@ -709,9 +709,9 @@ bot.onText(/\/help/, async (msg) => {
 Дата: 20/12/2024
 Время: 17.00-20.00
 Срок заявки: 24
-Сумма и способ оплаты: 20 долларов, банковский перевод
-Ключевые слова: уборка, офис, клининг
-Описание: Убираюсь в офисах после закрытия.
+Сумма и способ оплаты: 50 долларов, банковский перевод
+Ключевые слова: Германия, кроссовки, привезти
+Описание: Привезу пару коллекционных кроссовок из Германии за небольшое вознаграждение.
 Контакт: +123456789
 
 *Доступные команды бота:*
@@ -950,7 +950,7 @@ bot.on('message', (msg) => {
       deleteAllTrackedResultMessages(chatId);
       // Если заявок меньше 3, начинаем процесс создания новой заявки
       states[chatId] = { step: 'search_1', responses: {} };
-      sendAndTrackMessage(chatId, 'В какой стране вы хотите найти услугу? (Россия, Китай, Франция)');
+      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите найти услугу. Например: (Россия, Китай, Франция)');
     }
   } else if (text === 'Предоставляю услугу') {
     const userOfferRequests = db.getOfferRequestsByUser(userId);
@@ -965,7 +965,7 @@ bot.on('message', (msg) => {
       deleteAllTrackedMessages(chatId);
       deleteAllTrackedResultMessages(chatId);
       states[chatId] = { step: 'provide_1', responses: {} };
-      sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
+      sendAndTrackMessage(chatId, 'Укажите в какой стране вы хотите предоставить услугу. Например: (Россия, Германия, Италия)');
     }
   } else if (text === 'Сообщить') {
     deleteAllTrackedMessages(chatId);
@@ -1046,7 +1046,7 @@ bot.on('message', (msg) => {
       const offerOptions = {
         reply_markup: {
           inline_keyboard: [
-            [{ text: 'Удалить заявку предложения', callback_data: 'delete_offer' }],
+            [{ text: 'Удалить заявку предложения услуги', callback_data: 'delete_offer' }],
           ],
         },
       };
@@ -1097,14 +1097,14 @@ bot.on('callback_query', async (callbackQuery) => {
   if (data === 'delete_search') {
     states[chatId] = { step: 'delete_search_request', requests: db.getSearchRequestsByUser(userId) };
     setTimeout(() => {
-      sendAndTrackMessage(chatId, 'Введите номер заявки на поиск, которую хотите удалить (например, 1, 2, 3).');
+      sendAndTrackMessage(chatId, 'Введите номер заявки на поиск услуги, которую хотите удалить (например, 1, 2, 3).');
     }, 500); 
   }
   // Если нажата кнопка "Удалить заявку предложения"
   else if (data === 'delete_offer') {
     states[chatId] = { step: 'delete_offer_request', requests: db.getOfferRequestsByUser(userId) };
     setTimeout(() => {
-      sendAndTrackMessage(chatId, 'Введите номер заявки предложения, которую хотите удалить (например, 1, 2, 3).');
+      sendAndTrackMessage(chatId, 'Введите номер заявки предложения услуги, которую хотите удалить (например, 1, 2, 3).');
     }, 500); 
   }
 
@@ -1127,7 +1127,7 @@ bot.on('message', (msg) => {
         const selectedRequest = userState.requests[index];
         // Используем новую функцию для удаления заявки на поиск услуг
         db.deleteSearchRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
-        sendAndTrackMessage(chatId, `Заявка на поиск услуг номер ${text} была успешно удалена.`);
+        sendAndTrackMessage(chatId, `Заявка на поиск услуги номер ${text} была успешно удалена.`);
         deleteAllTrackedListMessages(chatId);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
@@ -1145,7 +1145,7 @@ bot.on('message', (msg) => {
         const selectedRequest = userState.requests[index];
         // Используем новую функцию для удаления заявки на предоставление услуг
         db.deleteOfferRequest(userId, selectedRequest.country, selectedRequest.city, selectedRequest.date, selectedRequest.time, selectedRequest.amount, selectedRequest.description);
-        sendAndTrackMessage(chatId, `Заявка на предоставление услуг номер ${text} была успешно удалена.`);
+        sendAndTrackMessage(chatId, `Заявка на предоставление услуги номер ${text} была успешно удалена.`);
         deleteAllTrackedListMessages(chatId);
       } else {
         sendAndTrackMessage(chatId, 'Некорректный номер заявки. Пожалуйста, введите правильный номер.');
@@ -1176,7 +1176,7 @@ async function handleSearchService(chatId, text, userState, userId) {
         userState.responses.countryISO = countryISOCode;
 
         userState.step = 'search_2';
-        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
+        sendAndTrackMessage(chatId, `Укажите город страны ${bestMatchCountry} в котором вы хотели бы найти услугу. Например: (Москва, Париж, Берлин). Если вас устроит любой город, то вместо названия города напишите 0.`);
       } else {
         sendAndTrackMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
       }
@@ -1194,7 +1194,7 @@ async function handleSearchService(chatId, text, userState, userId) {
         userState.step = 'search_3';
         sendAndTrackMessage(
           chatId,
-          `Город подтвержден как "Любой город". Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`
+          `Город подтвержден как "Любой город". Укажите дату, когда вам нужна услуга. Например: (01/10/2024). Дата не может быть позже чем через неделю от текущей даты.`
         );
       } else {
 
@@ -1204,11 +1204,10 @@ async function handleSearchService(chatId, text, userState, userId) {
             userState.responses.city = result.matchedCity;
             userState.responses.timezone = result.timezone;
             userState.step = 'search_3';
-            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вам нужна услуга. Например: (01/10/2024). Дата не может быть позже чем через неделю от текущей даты.`);
           } else {
             // Город не подтвержден, предлагаем варианты
-            const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
-            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Проверьте правильность написания города и попробуйте снова.`);
           }
         }).catch((error) => {
           console.error('Ошибка при проверке города:', error);
@@ -1219,7 +1218,7 @@ async function handleSearchService(chatId, text, userState, userId) {
 
     case 'search_3':
   if (!dateRegex.test(text)) {
-    sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате DD/MM/YYYY (например, 01/10/2023).');
+    sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате ДД/ММ/ГГГГ. Например: (01/10/2024).');
     } else {
     const [_, day, month, year] = text.match(dateRegex);
     const inputDate = new Date(`${year}-${month}-${day}`);
@@ -1249,7 +1248,7 @@ async function handleSearchService(chatId, text, userState, userId) {
       } else {
         userState.responses.date = text;
         userState.step = 'search_4';
-        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30). Если вы ищете услугу в любое время, то укажите (00.00-23.59).');
+        sendAndTrackMessage(chatId, 'Укажите временной промежуток в котором услуга может быть оказана. Например: (14.30-15.30). Если вам подходит любое время, то укажите (00.00-23.59).');
       }
     }
   }
@@ -1297,9 +1296,10 @@ async function handleSearchService(chatId, text, userState, userId) {
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
+          const fixedMinute = String(currentMinute).padStart(2, '0');
           sendAndTrackMessage(
             chatId,
-            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы ищите услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы ищите услугу (${currentHour}.${fixedMinute}). Укажите время больше текущего времени.`
           );
           break;
         }
@@ -1309,42 +1309,42 @@ async function handleSearchService(chatId, text, userState, userId) {
       // Если время корректно, сохраняем его и переходим к следующему шагу
       userState.responses.time = text;
       userState.step = 'search_5';
-      sendAndTrackMessage(chatId, 'Укажите сумму, которую вы готовы заплатить за услугу (например, 5000 рублей, 30 евро, 100 юаней):');
+      sendAndTrackMessage(chatId, 'Укажите сумму, которую вы готовы заплатить за услугу и способ оплаты. Например: (5000 рублей наличными, 30 евро картой, 100 юаней картой или наличными):');
     } else {
       // Сообщение об ошибке формата
-      sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
+      sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM. Например: (14.30-15.30).');
     }
     break;
     
     case 'search_5':
       userState.responses.amount = text;
       userState.step = 'search_6';
-      sendAndTrackMessage(chatId, 'Введите время, которая ваша заявка будет активна. От 1 до 24 часов. Введите только число:');
+      sendAndTrackMessage(chatId, 'Введите время, которое ваша заявка будет активна. От 1 до 24 часов. Введите только число:');
       break;
 
       case 'search_6':
         const Timer = Number(text); // Преобразуем текст в число
         if (isNaN(Timer) || Timer < 1 || Timer > 24 || !Number.isInteger(Timer)) {
-          sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+          sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24. Например: (3, 24, 12).');
           break;
         }
       
         // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
         userState.responses.timer = text;
         userState.step = 'search_7';
-        sendAndTrackMessage(chatId, 'Напишете ключевые слова по которым можно было бы определить, какую услугу вы ищете (мы рекомендуем использовать несколько слов, которые могут точно описать услугу, например (учитель, репетитор, математика)):');
+        sendAndTrackMessage(chatId, 'Напишете ключевые слова по которым можно было бы определить, какую услугу вы ищете. Мы рекомендуем использовать несколько слов, которые могут точно описать услугу. Например: (учитель, репетитор, математика), (сумка, Италия, привезти).');
         break;
 
     case 'search_7':
       userState.responses.keywords = text;
       userState.step = 'search_8';
-      sendAndTrackMessage(chatId, 'Дайте описание услуги, которую вы ищете:');
+      sendAndTrackMessage(chatId, 'Дайте описание услуги, которую вы ищете. Здесь вы можете дать развернутое описание услуги. Например: (Ищу того, кто мог бы отправить сумочку из Италии.)');
       break;
 
     case 'search_8':
       userState.responses.description = text;
       userState.step = 'search_9';
-      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
+      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные. Например: (+7 12345678, пример@почты.com, @Никнейм)');
       break;
 
     case 'search_9':
@@ -1385,7 +1385,6 @@ async function handleSearchService(chatId, text, userState, userId) {
               const timeRange = userState.responses.time;
 
               const [startTime, endTime] = timeRange.split('-');
-              console.log(`После разбиения: startTime=${startTime}, endTime=${endTime}`);
 
               const userKeywords = userState.responses.keywords;
               const userDate = userState.responses.date;
@@ -1426,9 +1425,9 @@ async function handleSearchService(chatId, text, userState, userId) {
             } else {
               // Сообщение в случае отсутствия предложений по стране
               if (isAnyCity) {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\nПопробуйте подать заявку позже или подождите пока кто-то на нее не отреагирует.\n/help');
               } else {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\nПопробуйте подать заявку позже или подождите пока кто-то на нее не отреагирует.\n/help');
               }
             }
           
@@ -1458,7 +1457,7 @@ async function handleProvideService(chatId, text, userState, userId) {
         userState.responses.countryISO = countryISOCode;
 
         userState.step = 'provide_2';
-        sendAndTrackMessage(chatId, `Страна выбрана: ${bestMatchCountry}. Укажите город: (Москва, Париж, Берлин)`);
+        sendAndTrackMessage(chatId, `Укажите город страны ${bestMatchCountry} в котором вы предоставляете услугу. Например: (Москва, Париж, Лейпциг). Если вас устроит любой город, то вместо названия города напишите 0.`);
       } else {
         sendAndTrackMessage(chatId, 'Не могу найти страну с таким названием. Попробуйте снова.');
       }
@@ -1476,7 +1475,7 @@ async function handleProvideService(chatId, text, userState, userId) {
         userState.step = 'provide_3';
         sendAndTrackMessage(
           chatId,
-          `Город подтвержден как "Любой город". Укажите дату, когда вы оказываете услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`
+          `Город подтвержден как "Любой город". Укажите дату, когда вы готовы оказать. Например: (01/10/2024). Дата не может быть позже чем через неделю от текущей даты.`
         );
       } else {
 
@@ -1486,11 +1485,10 @@ async function handleProvideService(chatId, text, userState, userId) {
             userState.responses.city = result.matchedCity;
             userState.responses.timezone = result.timezone;
             userState.step = 'provide_3';
-            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вы оказываете услугу (например, 01/10/2023). Дата не может быть позже чем через неделю от текущей даты.`);
+            sendAndTrackMessage(chatId, `Город "${result.matchedCity}" подтвержден. Укажите дату, когда вы готовы оказать услугу. Например: (01/10/2024). Дата не может быть позже чем через неделю от текущей даты.`);
           } else {
             // Город не подтвержден, предлагаем варианты
-            const suggestions = result.suggestions.length > 0 ? result.suggestions.join(', ') : 'нет вариантов';
-            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Возможные варианты: ${suggestions}. Попробуйте снова.`);
+            sendAndTrackMessage(chatId, `Город "${cityName}" не найден в указанной стране. Проверьте правильность написания города и попробуйте снова.`);
           }
         }).catch((error) => {
           console.error('Ошибка при проверке города:', error);
@@ -1502,7 +1500,7 @@ async function handleProvideService(chatId, text, userState, userId) {
 
     case 'provide_3':
   if (!dateRegex.test(text)) {
-    sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате DD/MM/YYYY (например, 01/10/2023).');
+    sendAndTrackMessage(chatId, 'Неверный формат даты. Укажите дату в формате ДД/ММ/ГГГГ. Например: (01/10/2024).');
   } else {
     const [_, day, month, year] = text.match(dateRegex);
     const inputDate = new Date(`${year}-${month}-${day}`);
@@ -1532,7 +1530,7 @@ async function handleProvideService(chatId, text, userState, userId) {
       } else {
         userState.responses.date = text;
         userState.step = 'provide_4';
-        sendAndTrackMessage(chatId, 'Укажите время, когда вам нужна услуга (например, 14.30-15.30). Если вы готовы оказать услугу в любое время, то укажите (00.00-23.59).');
+        sendAndTrackMessage(chatId, 'Укажите временной промежуток в котором вы можете оказать услугу. Например: (14.30-15.30). Если вам подходит любое время, то укажите (00.00-23.59).');
       }
     }
   }
@@ -1581,9 +1579,10 @@ async function handleProvideService(chatId, text, userState, userId) {
   
         // Проверка: начальное время должно быть строго больше текущего времени
         if (startH < currentHour || (startH === currentHour && startM <= currentMinute)) {
+          const fixedMinute = String(currentMinute).padStart(2, '0');
           sendAndTrackMessage(
             chatId,
-            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы оказываете услугу (${currentHour}.${currentMinute}). Укажите время больше текущего времени.`
+            `Начальное время услуги не может быть меньше или равно текущему времени страны где вы оказываете услугу (${currentHour}.${fixedMinute}). Укажите время больше текущего времени.`
           );
           break;
         }
@@ -1592,11 +1591,11 @@ async function handleProvideService(chatId, text, userState, userId) {
           // Если время корректно, сохраняем его и переходим к следующему шагу
           userState.responses.time = text;
           userState.step = 'provide_5';
-          sendAndTrackMessage(chatId, 'Укажите сумму за которую вы готовы выполнить услугу (например, 5000 рублей, 30 евро, 100 юаней):');
+          sendAndTrackMessage(chatId, 'Укажите сумму, за которую вы готовы выполнить услугу и способ оплаты. Например: (5000 рублей наличными, 30 евро картой, 100 юаней картой или наличными):');
 
       } else {
         // Сообщение об ошибке формата
-        sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM (например, 14.30-15.30).');
+        sendAndTrackMessage(chatId, 'Неверный формат времени. Укажите время в формате HH.MM-HH.MM. Например: (14.30-15.30).');
       }
     
       break;
@@ -1604,32 +1603,32 @@ async function handleProvideService(chatId, text, userState, userId) {
     case 'provide_5':
       userState.responses.amount = text;
       userState.step = 'provide_6';
-      sendAndTrackMessage(chatId, 'Введите время, которая ваша заявка будет активна. От 1 до 24 часов. Введите только число:');
+      sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24. Например: (3, 24, 12).');
       break;
 
       case 'provide_6':
         const Timer = Number(text); // Преобразуем текст в число
         if (isNaN(Timer) || Timer < 1 || Timer > 24 || !Number.isInteger(Timer)) {
-          sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24 (например, 3).');
+          sendAndTrackMessage(chatId, 'Некорректное значение таймера. Укажите целое число от 1 до 24. Например: (3, 24, 12).');
           break;
         }
       
         // Если значение таймера корректное, сохраняем его и переходим к следующему шагу
         userState.responses.timer = text;
         userState.step = 'provide_7';
-        sendAndTrackMessage(chatId, 'Напишете ключевые слова по которым можно было бы определить, какую услугу вы предоставляете (мы рекомендуем использовать несколько слов, которые могут точно описать услугу, например (учитель, репетитор, математика)):');
+        sendAndTrackMessage(chatId, 'Напишете ключевые слова по которым можно было бы определить, какую услугу вы предоставляете. Мы рекомендуем использовать несколько слов, которые могут точно описать услугу. Например: (учитель, репетитор, математика), (сумка, Италия, привезти).');
         break;
       
      case 'provide_7':
       userState.responses.keywords = text;
       userState.step = 'provide_8';
-      sendAndTrackMessage(chatId, 'Дайте описание услуги, которую вы предоставляете:');
+      sendAndTrackMessage(chatId, 'Дайте описание услуги, которую вы предоставляете. Здесь вы можете дать развернутое описание услуги. Например: (Отправлю на заказ сумочку из Италии.)');
       break;
 
     case 'provide_8':
       userState.responses.description = text;
       userState.step = 'provide_9';
-      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные (например, +7 12345678, пример@почты.com, @Никнейм)');
+      sendAndTrackMessage(chatId, 'Оставьте свои контакные данные. Например: (+7 12345678, пример@почты.com, @Никнейм)');
       break;
 
     case 'provide_9':
@@ -1690,7 +1689,7 @@ async function handleProvideService(chatId, text, userState, userId) {
                                        `Ключевые слова: ${offer.keywords}\n` +
                                        `Описание: ${offer.description}\n` +
                                        `Контакт: ${offer.contact}\n\n` +
-                                       `Свяжитесь с предоставителем услуги, чтобы обсудить детали.\n` +
+                                       `Свяжитесь с предоставителем объявления, чтобы обсудить детали.\n` +
                                        `Дата создания аккаунта: ${offer.creation_date}`;
               
                   // Отправляем сообщение с задержкой между каждым следующим
@@ -1707,9 +1706,9 @@ async function handleProvideService(chatId, text, userState, userId) {
             } else {
               // Сообщение в случае отсутствия предложений по стране
               if (isAnyCity) {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанной стране.\nПопробуйте подать заявку позже или подождите пока кто-то на нее не отреагирует.\n/help');
               } else {
-                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\n/help');
+                sendAndTrackResultMessage(chatId, 'На данный момент нет доступных предложений по указанному городу.\nПопробуйте подать заявку позже или подождите пока кто-то на нее не отреагирует.\n/help');
               }
             }
 
