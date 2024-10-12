@@ -252,6 +252,7 @@ const countryMapping = {
   'Малайзия': 'Malaysia',
   'Мальта': 'Malta',
   'Марокко': 'Morocco',
+  'Ангола': 'Angola',
   'Непал': 'Nepal',
   'Новая Зеландия': 'New Zealand',
   'Норвегия': 'Norway',
