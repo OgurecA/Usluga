@@ -790,6 +790,8 @@ function sendEmail(subject, message) {
     text: message // Текст письма
   };
 
+  console.log(`Отправка письма с темой: ${subject} и сообщением: ${message}`);
+
   transporter.sendMail(mailOptions, function(error, info) {
     if (error) {
       console.log('Ошибка при отправке письма: ', error);
@@ -798,6 +800,7 @@ function sendEmail(subject, message) {
     }
   });
 }
+
 
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
@@ -984,7 +987,7 @@ bot.on('message', (msg) => {
     deleteAllTrackedMessages(chatId);
     sendAndTrackMessage(chatId, 'Напишите репепорт и номер неугодной услуги');
 
-    bot.once('message', async (msg) => {
+    bot.once('message', (msg) => {
       const userMessage = msg.text; // Получаем текст сообщения пользователя
       const userChatId = msg.chat.id; // Получаем ID чата пользователя
   
