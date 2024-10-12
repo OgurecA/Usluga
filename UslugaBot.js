@@ -617,16 +617,6 @@ function sortOffersByTimeAndDescription(offers, userStartTime, userEndTime, user
   });
 }
 
-const offerRequests = [
-  { id: 1, date: '15/10/2024', time: '12.00-16.00', description: 'Техническое обслуживание оборудования' },
-  { id: 2, date: '16/10/2024', time: '13.00-14.00', description: 'Настройка ПО и обслуживание' },
-  { id: 3, date: '17/10/2024', time: '15.00-17.00', description: 'Обслуживание и проверка систем' },
-  { id: 4, date: '17/10/2024', time: '14.00-15.00', description: 'Проверка состояния оборудования' },
-];
-
-const sort = sortOffersByTimeAndDescription(offerRequests, '12.00', '16.00', 'Обслуживание серверов и оборудования', '17/10/2024')
-
-
 // Регулярные выражения для валидации данных
 const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
 const timeRegex = /^(\d{2})\.(\d{2})-(\d{2})\.(\d{2})$/;
@@ -667,7 +657,7 @@ bot.onText(/\/start/, async (msg) => {
       keyboard: [
         [{ text: 'Ищу услугу' }, { text: 'Предоставляю услугу' }],
         [{ text: 'Мои заявки' }, { text: '/help' }],
-        [{ text: 'Наябедничать'}]
+        [{ text: 'Сообщить'}]
       ],
       resize_keyboard: true,
       one_time_keyboard: false,
@@ -953,16 +943,26 @@ bot.on('message', (msg) => {
       states[chatId] = { step: 'provide_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
     }
-  } else if (text === 'Сообщить о проблеме') {
+  } else if (text === 'Сообщить') {
     deleteAllTrackedMessages(chatId);
-    sendAndTrackMessage(chatId, 'Опишите возникшую проблему и номер услуги с кототрой она возникла');
+    sendAndTrackMessage(chatId, 'Опишите возникшую ситуацию и номер услуги с кототрой она возникла.');
+
+    if (states[chatId]) {
+      delete states[chatId]; // Удаляем состояние пользователя из хранилища
+      setTimeout(() => {
+        deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+      }, 500); 
+    }
+    setTimeout(() => {
+      deleteAllTrackedMessages(chatId); // Удаляем все отслеживаемые сообщения для этого чата
+    }, 500); 
 
     bot.once('message', (msg) => {
       const userMessage = msg.text; // Получаем текст сообщения пользователя
       const userChatId = msg.chat.id; // Получаем ID чата пользователя
   
       // Фиксируем сообщение пользователя
-      sendAndTrackMessage(userChatId, `Ваш репорт: ${userMessage}`);
+      sendAndTrackMessage(userChatId, `Вы успешно описали ситуацию`);
 
       const message = `Новый репорт от пользователя ${userChatId}\nПользователь отправил репорт: ${userMessage}`;
 
