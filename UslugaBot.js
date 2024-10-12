@@ -781,6 +781,9 @@ let transporter = nodemailer.createTransport({
   auth: {
     user: 'contact@dominators.website', // Ваша почта на домене
     pass: 'V8polgop' // Пароль от почтового ящика
+  },
+  tls: {
+    rejectUnauthorized: false // Отключаем проверку сертификата
   }
 });
 
