@@ -720,8 +720,6 @@ bot.onText(/\/help/, async (msg) => {
 });
 
 
-
-
 // Конфигурация Geonames
 const GEONAMES_USERNAME = 'acp044';
 
@@ -773,40 +771,6 @@ async function checkCityName(cityName, countryCode) {
     return { isValid: false, suggestions: [] };
   }
 }
-
-let transporter = nodemailer.createTransport({
-  host: 'mail.tutanota.com',
-  port: 465, // Для SSL используйте порт 465
-  secure: true, // Устанавливаем true для использования SSL
-  auth: {
-    user: 'a.com', // Ваш email на Tutamail
-    pass: '!' // Ваш пароль от Tutamail
-  }
-});
-
-function sendEmail(subject, message) {
-  console.log("Начало отправки письма...");
-
-  let mailOptions = {
-    from: 'mail.com', // Ваш email
-    to: '@gmail.com', // Email получателя
-    subject: subject, // Тема письма
-    text: message // Текст письма
-  };
-
-  console.log(`Отправка письма с темой: ${subject} и сообщением: ${message}`);
-
-  transporter.sendMail(mailOptions, function(error, info) {
-    if (error) {
-      console.log('Ошибка при отправке письма: ', error);
-    } else {
-      console.log('Письмо успешно отправлено: ' + info.response);
-    }
-  });
-
-  console.log("Функция sendMail вызвана");
-}
-
 
 
 const messagesToDelete = {}; // Глобальное хранилище для отслеживания сообщений
@@ -989,9 +953,9 @@ bot.on('message', (msg) => {
       states[chatId] = { step: 'provide_1', responses: {} };
       sendAndTrackMessage(chatId, 'В какой стране вы хотите предоставить услугу? (Россия, Китай, Франция)');
     }
-  } else if (text === 'Наябедничать') {
+  } else if (text === 'Сообщить о проблеме') {
     deleteAllTrackedMessages(chatId);
-    sendAndTrackMessage(chatId, 'Напишите репепорт и номер неугодной услуги');
+    sendAndTrackMessage(chatId, 'Опишите возникшую проблему и номер услуги с кототрой она возникла');
 
     bot.once('message', (msg) => {
       const userMessage = msg.text; // Получаем текст сообщения пользователя
