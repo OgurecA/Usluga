@@ -774,22 +774,21 @@ async function checkCityName(cityName, countryCode) {
   }
 }
 
+const nodemailer = require('nodemailer');
+
 let transporter = nodemailer.createTransport({
-  host: 'smtp.dominators.website',
-  port: 587, // Используйте порт 587 для STARTTLS
-  secure: false, // Указываем false, чтобы использовать STARTTLS, а не SSL
+  host: 'mail.tutanota.com',
+  port: 465, // Для SSL используйте порт 465
+  secure: true, // Устанавливаем true для использования SSL
   auth: {
-    user: 'contact@dominators.website',
-    pass: 'V8polgop' // Ваш пароль
-  },
-  tls: {
-    rejectUnauthorized: false // Игнорируем ошибки самоподписанных сертификатов
+    user: 'acp044@tutamail.com', // Ваш email на Tutamail
+    pass: 'V8polgop!' // Ваш пароль от Tutamail
   }
 });
 
 function sendEmail(subject, message) {
   let mailOptions = {
-    from: 'contact@dominators.website', // Ваш email
+    from: 'acp044@tutamail.com', // Ваш email
     to: 'acpwork044@gmail.com', // Email получателя
     subject: subject, // Тема письма
     text: message // Текст письма
@@ -806,6 +805,8 @@ function sendEmail(subject, message) {
   });
 }
 
+
+sendEmail('Тестовая тема', 'Это тестовое сообщение через Nodemailer с Tutamail.');
 
 
 
